@@ -1,6 +1,5 @@
 # boilerplate -------------------------------------------------------------
 if (!require(pacman)) install.packages("pacman")
-if (!require(janitor)) install.packages("janitor")
 p_load("tidyverse", "data.table")
 
 YEAR <- 2017
@@ -20,13 +19,22 @@ saveas <- c("grants.csv",
 # ------------------------------------------------------------------------
 # > p3 csv files are surprisingly difficult to parse on linux
 # > open and (re-)save as in loffice for proper encoding
+# > even better: use MS Excel to fix p3 csv files
+# p_load("readr", "rio")
+# grants_ok <- rio::import("grants.xlsx") %>%
+#   janitor::clean_names() %>%
+#   select(-starts_with("x_"))
+# people_ok <- rio::import("people.xlsx") %>%
+#   janitor::clean_names()
+# collab_ok <- rio::import("collab.xlsx") %>%
+#   janitor::clean_names()
+# write_csv(grants_ok, path = saveas[1])
+# write_csv(people_ok, path = saveas[2])
+# write_csv(collab_ok, path = saveas[3])
 
-get.csv <- function(x) janitor::clean_names(fread(x))
-
-grants <- get.csv(saveas[1])
-people <- get.csv(saveas[2])
-collab <- get.csv(saveas[3])
-
+grants <- fread(saveas[1])
+people <- fread(saveas[2])
+collab <- fread(saveas[3])
 
 # find collab for a given YEAR --------------------------------------------
 
