@@ -79,17 +79,18 @@ core <- people %>%
   arrange(project_number) %>%
   distinct()
 
-# geocodes for the places
-geocodes <- tibble(
-  place = sort(unique(core$institute_place)),
-  lat = rep(NA_real_, n_distinct(core$institute_place)),
-  lon = rep(NA_real_, n_distinct(core$institute_place)),
-  addr = rep(NA_character_, n_distinct(core$institute_place)),
-  id = rep(NA_character_, n_distinct(core$institute_place)))
 
 # takes a few minutes to update geocodes
 update_geocodes <- FALSE
 if (update_geocodes) {
+  # geocodes for the places
+  geocodes <- tibble(
+    place = sort(unique(core$institute_place)),
+    lat = rep(NA_real_, n_distinct(core$institute_place)),
+    lon = rep(NA_real_, n_distinct(core$institute_place)),
+    addr = rep(NA_character_, n_distinct(core$institute_place)),
+    id = rep(NA_character_, n_distinct(core$institute_place)))
+
   # https://gis.stackexchange.com/questions/158328/batch-geocoding-in-r
   # https://github.com/hrbrmstr/nominatim
   p_load_gh("hrbrmstr/nominatim")
@@ -141,13 +142,77 @@ core <- left_join(core, geocodes, by = c("institute_place" = "place"))
 # distinguish between national and international projects ...
 
 core_ch <- filter(core, str_detect(addr, "Switzerland$"))
-ch_places <- group_by(core_ch, project_number) %>%
+
+# find projects on more than one place in Switzerland
+projects_places <- group_by(core_ch, project_number) %>%
   summarise(n_places = n_distinct(institute_place)) %>%
   filter(n_places > 1)
+core_ch <- semi_join(core_ch, projects_places)
 
-# this is a good start
-core_ch <- semi_join(core_ch, ch_places)
+
 
 # plot graph --------------------------------------------------------------
+# > http://kateto.net/network-visualization
 
-# p_load(maps, geosphere, mapdata, viridisLite)
+# nodes as places
+nodes <- group_by(core_ch, institute_place) %>%
+  summarise(y = head(lat, 1), x = head(lon, 1), size = n()) %>%
+  arrange(desc(size))
+
+p_load("maps", "mapdata", "geosphere")
+
+
+
+# edges defined by the projects
+p_load("magrittr")
+project_edges <- function(number, df) {
+  edges <- filter(df, project_number == number) %>%
+    select(institute_place) %$%
+    combn(institute_place, m = 2)
+  tibble(from = edges[1, ],
+         to = edges[2,]) %>%
+    mutate(number = number) %>%
+    select(number, everything())
+}
+
+edges <- purrr::map(unique(core_ch$project_number), project_edges, df = core_ch)
+edges <- do.call(bind_rows, edges)
+
+edges <- edges %>%
+  left_join(select(nodes, -size), by = c("from" = "institute_place")) %>%
+  rename(x1 = x, y1 = y)
+  left_join(select(nodes, -size), by = c("to" = "institute_place")) %>%
+  rename(x2 = x, y2 = y) %>%
+  # add domain to the edges
+  left_join(select(grants, project_number, domain),
+            by = c("number" = "project_number"))
+
+snsf_colors <-
+  c("#FFB24C", "#194CB2", "#666666") %>%
+  adjustcolor(alpha = 0.1)
+
+
+# map of Switzerland
+maps::map(database = "worldHires", regions = "Switzerland",
+          fill = FALSE, col = rgb(0, 0, 0, .33))
+
+# map edges
+for (k in 1:nrow(edges))  {
+  arc <- gcIntermediate(
+    c(edges$x1[k], edges$y1[k]),
+    c(edges$x2[k], edges$y2[k]),
+    n = 100, addStartEnd = TRUE)
+  lines(arc, col = snsf_colors[edges$domain[k]], lwd = 3)
+}
+
+# main cities
+cities <- c("Zürich", "Lausanne", "Bern", "Genève", "Basel", "Fribourg",
+            "Neuchâtel", "St. Gallen", "Lugano", "Luzern", "Winterthur")
+city_nodes <- filter(nodes, institute_place %in% cities)
+graphics::text(city_nodes$x, city_nodes$y, labels = city_nodes$institute_place,
+               pos = 3, cex = .7, col = rgb(0, 0, 0, .66), font = 2)
+
+# > show all nodes
+points(x = nodes$x, y = nodes$y, pch = 16,
+  cex = log(nodes$size)/2, col = rgb(0, 0, 0, .33))
+
