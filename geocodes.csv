@@ -1,5 +1,5 @@
 place,lat,lon,addr,id
-69120 Heidelberg,49.4135138,8.6844798,"69120 Heidelberg, Germany",ChIJnzLmUhbBl0cRkMak9T_9Hxw
+69120 Heidelberg,49.4164485,8.68880654867968,"Neuenheim, Heidelberg, Regierungsbezirk Karlsruhe, Baden-Württemberg, 69120, Germany",151274321
 Aarau,47.3927146,8.0444448,"Aarau, Bezirk Aarau, Aargau, 5000, Switzerland",151329375
 Aarhus C,56.1496278,10.2134046,"Aarhus, Aarhus Municipality, Central Denmark Region, Denmark",133615
 Aberdeen,57.1452452,-2.0913745,"Aberdeen, Aberdeenshire, Scotland, United Kingdom",113817
@@ -44,7 +44,6 @@ Bangalore,12.9791198,77.5912997,"Bengaluru, Bangalore Urban, Karnataka, 560001, 
 Banja Luka,44.7719893,17.1898768,"Banja Luka, City of Banja Luka, Republika Srpska, Bosnia and Herzegovina",710825
 Banyuls-sur-Mer,42.4794084,3.1275893,"Banyuls-sur-Mer, Céret, Pyrénées-Orientales, Languedoc-Roussillon, Metropolitan France, 66650, France",151130824
 Barcelona,41.3850639,2.1734035,"Barcelona, Spain",ChIJ5TCOcRaYpBIRCmZHTz37sEQ
-Barmelweid,47.4219129,7.9720204,"Barmelweid, Bezirk Aarau, Aargau, 5017, Switzerland",2679451136
 Barnaul,53.3474212,83.7784296,"Barnaul, городской округ Барнаул, Altai Krai, Siberian Federal District, 656000, Russian Federation",151313954
 Basel,47.5581077,7.5878261,"Basel, Basel-City, Switzerland",151329330
 Batavia,48.5740136,13.4606445,"Passau, Lower Bavaria, Free State of Bavaria, Germany",635621
@@ -52,7 +51,6 @@ Beauport,46.8594456,-71.1932496,"Beauport, Quebec, Canada",2676893927
 Beerse,51.3134921,4.83757045966409,"Beerse, Turnhout, Antwerp, Flanders, Belgium",2587976120
 Beijing,39.9059631,116.391248,"Beijing, Dongcheng District, Beijing, 100010, China",121010
 Beirut,33.8959203,35.47843,"Beirut, Beirut Governorate, Lebanon",2666715413
-Belfast,54.5969869,-5.9300992,"Belfast, County Antrim, Northern Ireland, United Kingdom",15419474
 Belgrade,44.8178787,20.4568089,"Belgrade, Central Serbia, 11000, Serbia",2593379591
 Bellinzona,46.1918617,9.0204562,"Bellinzona, Circolo di Bellinzona, Distretto di Bellinzona, Ticino, Switzerland",151329696
 Bellville,29.9502253,-96.2571858,"Bellville, Texas, United States of America",61596886
@@ -89,6 +87,7 @@ Bologne,44.4936714,11.3430347,"Bologna, BO, Emilia-Romagna, Italy",151135452
 Bonn,50.7358511,7.1006599,"Bonn, Regierungsbezirk Köln, North Rhine-Westphalia, Germany",131664
 Bordeaux,44.841225,-0.5800364,"Bordeaux, Gironde, Aquitaine, Metropolitan France, 33000;33100;33300;33800, France",151146815
 Boston,42.3604823,-71.0595678,"Boston, Suffolk County, Massachusetts, United States of America",151408289
+Boukané,NA,NA,NA,NA
 Bramois,46.2321819,7.4038983,"Bramois, Sion, Valais - Wallis, 1967, Switzerland",972516
 Brasov,45.6523093,25.6102746,"Brasov, Brașov, Romania",828172
 Bratislava,48.1359085,17.1597440625,"Bratislava, Region of Bratislava, Slovakia",151343908
@@ -217,7 +216,7 @@ Garmisch Partenkirchen,47.4938359,11.103992,"Garmisch-Partenkirchen, Landkreis G
 Gattikon,47.2843053,8.5487611,"Gattikon, Thalwil, Bezirk Horgen, Zurich, 8800, Switzerland",2683964559
 Genève,46.2043907,6.1431577,"Geneva, Switzerland",ChIJ6-LQkwZljEcRObwLezWVtqA
 Genoa,44.4056499,8.946256,"Genoa, Metropolitan City of Genoa, Italy",ChIJrZrU3FJB0xIRCmKBGPGEaiM
-Genova,38.0320628,-97.3393788,"1021 Washington Rd #300, Newton, KS 67114, USA",ChIJMVSytZETu4cRmCwH8Y9AGiI
+Genova,35.609611,-82.568876,"63 Zillicoa St, Asheville, NC 28801, USA",ChIJmyTo3lGLWYgRZjMvNFZ_oa4
 Gent,51.0538286,3.7250121,"Ghent, Gent, East Flanders, Flanders, Belgium",151247001
 Georgetown,38.9076089,-77.0722585,"3700 O St NW, Washington, DC 20057, USA",ChIJa4-fzkC2t4kRgihmVAVtnRw
 Ghent,51.0538286,3.7250121,"Ghent, Gent, East Flanders, Flanders, Belgium",151247001
@@ -235,7 +234,6 @@ Greenwich,52.0367323,1.168934,"Greenwich, Ipswich, Suffolk, East of England, Eng
 Greifswald,54.0865463,13.3923414,"Greifswald, Germany",ChIJ1yJjoaF0q0cRkIKEregaJQQ
 Greifswald-Insel Riems,54.1831113,13.3630339,"Riems, Greifswald, Germany",ChIJ0-sUNDByq0cR-tauoZATiqc
 Grenoble,45.182478,5.7210773,"Grenoble, Isère, Rhône-Alpes, Metropolitan France, 38000;38100, France",151145335
-"Groenkloof, Pretoria",-25.7752778,28.2183333,"Groenkloof, Pretoria, City of Tshwane Metropolitan Municipality, Gauteng, RSA",123420
 Groningen,53.22179255,6.5582454164798,"Groningen, Netherlands, The Netherlands",151217601
 Guatemala City,14.6417889,-90.5132239,"Guatemala City, Guatemala",2617384452
 Guelph,43.5461764,-80.2470591,"Guelph, Wellington County, Ontario, Canada",219506
@@ -362,6 +360,7 @@ Lüneburg,53.2464214,10.4115179,"Lüneburg, Germany",ChIJW6SejMXdsUcRw_701MwGAMY
 Lusaka,-15.4166967,28.2813812,"Lusaka, Lusaka Province, Zambia",55012817
 Luxembourg,49.8158683,6.1296751,Luxembourg,4030953
 Luzern,47.0501682,8.3093072,"Lucerne, Switzerland",ChIJeXNUeSr6j0cRr1KZQNEq8K4
+Luzern KPD,NA,NA,NA,NA
 Lviv,49.8419505,24.0315968,"Lviv, Halytskyi District, Lviv City Council, Lviv Oblast, Ukraine",2669670548
 Lyon,45.7578137,4.8320114,"Lyon, Métropole de Lyon, Departemental constituency of Rhône, Auvergne-Rhône-Alpes, Metropolitan France, France",151152300
 Maastricht,50.85798545,5.69698818182211,"Maastricht, Province of Limburg, Netherlands, The Netherlands",151374960
@@ -385,6 +384,7 @@ Martigny,46.103115,7.0727354,"Martigny, Valais - Wallis, Switzerland",151330323
 Mascow,53.9336214,13.4157118,"Mascowstraße, Wieck, Gützkow, Züssow, Landkreis Vorpommern-Greifswald, Mecklenburg-Vorpommern, 17506, Germany",81717330
 Maseru,-29.3100536,27.4782219,"Maseru, Maseru District, Lesotho",169000
 Maseru West,-29.3017859,27.4724513,"Maseru West, Maseru, Maseru District, Maseru, Lesotho",17777267
+Matieland,NA,NA,NA,NA
 Mattarello,46.0079317,11.1284914,"Mattarello, TN, Trentino-Alto Adige - Südtirol, Italy",12790366
 Maynooth,53.3830239,-6.5922806,"Maynooth, County Kildare, Leinster, Ireland",254141
 MB Eindhoven,51.4478874,5.4859518,"5600 MB, The Netherlands",151705479
@@ -451,11 +451,14 @@ Novi Sad,45.2551053,19.845081,"Novi Sad, Novi Sad City, South Backa District, Vo
 Nyon,46.3821531,6.2398898,"Nyon, District de Nyon, Vaud, 1260, Switzerland",151330806
 Oakland,37.8043637,-122.2711137,"Oakland, CA, USA",ChIJA-2qKIt9hYARZ5N1NdUVtHE
 Oak Ridge,36.0103562,-84.2696449,"Oak Ridge, Anderson County, Tennessee, United States of America",151181373
+Obstlas Moskow,NA,NA,NA,NA
 Odessa,46.4846121,30.7325586,"Odessa, Prymors'kyi Rayon, Odessa, Odessa Oblast, 65000-65480, Ukraine",129841
 Offenbach am Main,50.0887662,8.7662861,"Offenbach am Main, Regierungsbezirk Darmstadt, Hesse, 63069, Germany",2636064964
 Oldenburg,53.1389753,8.2146017,"Oldenburg, Lower Saxony, Germany",912754
 Olten,47.3507365,7.9053185,"Olten, Bezirk Olten, Amtei Olten-Gösgen, Solothurn, Switzerland",151328855
 Orsay,48.6991805,2.1874811,"Orsay, Palaiseau, Essonne, Ile-de-France, Metropolitan France, 91400, France",151131074
+Orsay-Cedex,NA,NA,NA,NA
+Orsay Cédex,NA,NA,NA,NA
 Oslo,59.9132694,10.7391112,"Oslo, Norway",113527
 Osnabrück,52.2799112,8.0471788,"Osnabrück, Germany",ChIJTV17aZjluUcRYFwAY3fPJgQ
 Ouagadougou,12.3681481,-1.5270853,"Ouagadougou, Kadiogo, Centre, Burkina Faso",149712
@@ -504,7 +507,7 @@ Prishtina,42.6639939,21.1638351,"Pristina, Kukës, Prishtina Municipality, 10000
 Prishtine,42.6639939,21.1638351,"Pristina, Kukës, Prishtina Municipality, 10000, Kosovo",2631942405
 Pristina,42.6639939,21.1638351,"Pristina, Kukës, Prishtina Municipality, 10000, Kosovo",2631942405
 Pullman,46.7304268,-117.173895,"Pullman, Whitman County, Washington, United States of America",2653588321
-Québec,52.9399159,-73.5491361,"Quebec, Canada",ChIJoajRnzS1WEwRIABNrq0MBAE
+Québec,46.8138783,-71.2079809,"Québec City, QC, Canada",ChIJk4jbBYqWuEwRAzro8GMtxY8
 Quezon City,14.6509905,121.0486155,"Quezon City, District IV, Quezon City, Metro Manila, Philippines",108032
 Quito,-0.1553881,-78.4862309,"Quito, Pichincha, Ecuador",2675073633
 RA Leiden,52.1629077,4.4862522,"2312 RA, The Netherlands",151743166
@@ -563,6 +566,7 @@ Seville,37.3890924,-5.9844589,"Seville, Spain",ChIJkWK-FBFsEg0RSFb-HGIY8DQ
 Séville,37.3890924,-5.9844589,"Seville, Spain",ChIJkWK-FBFsEg0RSFb-HGIY8DQ
 Sfax,34.739739,10.7598516,"صفاقس, Sfax Medina, Sfax, 3000, Tunisia",987061
 Shanghai,31.2253441,121.4888922,"Shanghai, Huangpu District, Shanghai, China",2613199942
+Sharood,NA,NA,NA,NA
 Sheffield,53.3806626,-1.4702278,"Sheffield, Yorkshire and the Humber, England, United Kingdom",2683953090
 Shenzhen,22.5442673,114.0545327,"Shenzhen, Futian District, Shenzhen City, Guangdong, 518000, China",2648268259
 Sherbrooke,45.4029964,-71.887681,"Sherbrooke, Quebec, Canada",2691854206
@@ -700,4 +704,5 @@ Zomba,-15.3863208,35.3268273,"Zomba, Southern Region, Malawi",829985
 Zug,47.1661672,8.5154946,"Zug, Switzerland",ChIJ8-RGYCmrmkcREOrjxwO_UKk
 Zürich,47.3768866,8.541694,"Zürich, Switzerland",ChIJGaK-SZcLkEcRA9wf5_GNbuY
 Zürich Helsana Versicherungen AG,47.377503,8.544036,"Weinbergstrasse 5, 8000 Zürich, Switzerland",ChIJ10CPjKegmkcRcaC6cKmPO6M
+Zürich Postauto Zürich,NA,NA,NA,NA
 Zurzach,47.5865624,8.2944691,"Bad Zurzach, Bezirk Zurzach, Aargau, 5330, Switzerland",151329515
