@@ -248,7 +248,7 @@ city_nodes <- filter(nodes, institute_place %in% cities)
 graphics::text(
   city_nodes$x, city_nodes$y, 
   labels = city_nodes$institute_place, pos = 3, cex = .7, col = rgb(0, 0, 0, .75))
-dev.off()
+invisible(dev.off())
 ```
 
 ![switzerland](core_ch.svg)
