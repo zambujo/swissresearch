@@ -1,2 +1,2 @@
 # swissresearch
-Visualizing SNSF projects in P3
+Visualizing SNSF grant collaborations.
