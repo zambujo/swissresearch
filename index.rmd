@@ -7,7 +7,7 @@ output:
     code_folding: show
 ---
 
-**Highlighting collaborations in SNSF grants running in 2017.**
+> Highlighting collaborations in SNSF grants running in 2017.
 
 ```{r init, include=FALSE, cache=FALSE}
 if (!require(pacman)) install.packages("pacman")
@@ -39,10 +39,6 @@ purrr::walk2(p3url, saveas, download.file, quiet = TRUE)
 
 You can download up-to-date SNSF grant data [here](http://p3.snf.ch/Pages/DataAndDocumentation.aspx).  Before reading the datasets in R, however, I recommend using MS Excel (or Libre/Open Office) to fix csv parsing problems.
 
-```{r data_load}
-grants <- fread("grants.csv")
-people <- fread("people.csv")
-```
 
 `grants.csv` and `people.csv` correspond to `P3_GrantExport.csv` and `P3_PersonExport.csv`, respectively.  I made sure they read faultlessly and cleaned their headers with the `clean_names()` function from the [`janitor` package](https://github.com/sfirke/janitor).
 
@@ -52,6 +48,8 @@ We want to highlight `r YEAR` grants connecting institutes from different parts 
 
 ```{r collaborations}
 p_load("lubridate", "stringr")
+grants <- fread("grants.csv")
+people <- fread("people.csv")
 
 # focus on a time range
 trange <- ymd(c(str_c(YEAR, "-01-01"), str_c(YEAR, "-12-31")))
@@ -95,7 +93,6 @@ To show the network in a map, we focus on grants connecting people in different 
 places_per_grant <- group_by(people, project_number) %>%
   summarise(n_places = n_distinct(institute_place))
 
-head(places_per_grant)
 # network core: projects involving multiple places (n_places > 1)
 core <- people %>%
   select(-person_id_snsf) %>%
@@ -158,9 +155,9 @@ for (k in seq_along(geocodes$place)) {
 write_csv(geocodes, path = "geocodes.csv")
 ```
 
+
 ```{r metadata}
 geocodes <- fread("geocodes.csv") %>% drop_na()
-
 head(geocodes)
 # add geocode data to the network core
 core <- left_join(core, geocodes, by = c("institute_place" = "place"))
@@ -169,9 +166,9 @@ core <- left_join(core, geocodes, by = c("institute_place" = "place"))
 ### Swiss collaboration network
 
 Lets show the Swiss network first.  
-The visualization is heavily inspired from [here](http://kateto.net/network-visualization).
+The visualization is heavily inspired from [here](http://kateto.net/network-visualization) and/or [here](http://flowingdata.com/2011/05/11/how-to-map-connections-with-great-circles/).
 
-```{r swisscore}
+```{r swisscore, eval = FALSE}
 core_ch <- filter(core, str_detect(addr, "Switzerland$"))
 # find projects on more than one place in Switzerland
 ch_per_grant <- group_by(core_ch, project_number) %>%
@@ -179,33 +176,32 @@ ch_per_grant <- group_by(core_ch, project_number) %>%
 # swiss core: projects involving multiple places in Switzerland
 core_ch <- semi_join(core_ch, filter(ch_per_grant, n_places > 1), by = "project_number")
 
-# nodes as places
-nodes <- group_by(core_ch, institute_place) %>%
+# nodes (places) ----------------------------------------------------------
+nodes_ch <- group_by(core_ch, institute_place) %>%
   summarise(y = head(lat, 1), x = head(lon, 1), size = n()) %>%
   arrange(desc(size))
+head(nodes_ch)
+write_csv(nodes_ch, path = "nodes_ch.csv")
 
-head(nodes)
-# edges as grants
 p_load("magrittr")
 project_edges <- function(number, df) {
-  edges <- filter(df, project_number == number) %>%
+  links <- filter(df, project_number == number) %>%
     select(institute_place) %$%
     combn(sort(institute_place), m = 2)
-  tibble(from = edges[1, ],
-         to = edges[2,]) %>%
+  tibble(from = links[1, ],
+         to = links[2,]) %>%
     mutate(number = number) %>%
     select(number, everything())
 }
 
-# TODO: speed-up project_edges()
-edges <- purrr::map(unique(core_ch$project_number), project_edges, df = core_ch)
-edges <- do.call(bind_rows, edges)
-
+# edges (grants) ----------------------------------------------------------
+edges_ch <- purrr::map(unique(core_ch$project_number), project_edges, df = core_ch)
+edges_ch <- do.call(bind_rows, edges_ch)
 # add geocode metadata and group
-edges <- edges %>%
-  left_join(select(nodes, -size), by = c("from" = "institute_place")) %>%
+edges_ch <- edges_ch %>%
+  left_join(select(nodes_ch, -size), by = c("from" = "institute_place")) %>%
   rename(x1 = x, y1 = y) %>%
-  left_join(select(nodes, -size), by = c("to" = "institute_place")) %>%
+  left_join(select(nodes_ch, -size), by = c("to" = "institute_place")) %>%
   rename(x2 = x, y2 = y) %>%
   group_by(from, to) %>%
   summarise(
@@ -214,15 +210,17 @@ edges <- edges %>%
     x2 = head(x2, 1),
     y2 = head(y2, 1),
     strength = n())
-
-head(edges)
+head(edges_ch)
+write_csv(edges_ch, path = "edges_ch.csv")
 ```
 
 
 
-```{r svg}
+```{r svg_ch}
 # plot the nodes and the edges on the map of Switzerland
 p_load("maps", "mapdata", "geosphere")
+nodes_ch <- fread("nodes_ch.csv")
+edges_ch <- fread("edges_ch.csv")
 
 col_dark <- adjustcolor("#252525", alpha = 0.05)
 col_light <- adjustcolor("#08306b", alpha = 0.4)
@@ -235,30 +233,100 @@ maps::map(database = "worldHires", regions = "Switzerland",
           fill = FALSE, col = rgb(0, 0, 0, .2))
 
 # map nodes
-points(x = nodes$x, y = nodes$y, pch = 16,
-  cex = log(nodes$size)/2, col = rgb(0, 0, 0, .2))
+points(x = nodes_ch$x, y = nodes_ch$y, pch = 16,
+  cex = log(nodes_ch$size)/3, col = rgb(0, 0, 0, .2))
 # map edges
-for (k in 1:nrow(edges))  {
+for (k in 1:nrow(edges_ch))  {
   arc <- gcIntermediate(
-    c(edges$x1[k], edges$y1[k]),
-    c(edges$x2[k], edges$y2[k]),
+    c(edges_ch$x1[k], edges_ch$y1[k]),
+    c(edges_ch$x2[k], edges_ch$y2[k]),
     n = 100, addStartEnd = TRUE)
-  strength <- round(100 * sqrt(edges$strength[k]) / max(sqrt(edges$strength)))
+  strength <- round(100 * sqrt(edges_ch$strength[k]) / max(sqrt(edges_ch$strength)))
   lines(arc, col = edge_col[strength], lwd = strength / 10)
 }
-# label main cities
-cities <- c("Zürich", "Lausanne", "Bern", "Genève", "Basel", "Fribourg", "Neuchâtel", "St. Gallen", "Lugano", "Luzern", "Winterthur")
 
-city_nodes <- filter(nodes, institute_place %in% cities)
+# label main cities
+cities <- c("Zürich", "Lausanne", "Bern", "Genève", 
+            "Basel", "Fribourg", "Neuchâtel", "St. Gallen", 
+            "Lugano", "Luzern", "Winterthur")
+
+city_nodes <- filter(nodes_ch, institute_place %in% cities)
 graphics::text(
   city_nodes$x, city_nodes$y, 
-  labels = city_nodes$institute_place, pos = 3, cex = .7, col = rgb(0, 0, 0, .75))
+  labels = city_nodes$institute_place, pos = 3, cex = .7, col = rgb(0, 0, 0, .66))
 invisible(dev.off())
 ```
 
 ![switzerland](core_ch.svg)
 
+### International collaboration network
 
+Same as above, but for the rest of the world.
+
+```{r international, eval=FALSE}
+
+nodes_io <- group_by(core, institute_place) %>%
+  summarise(y = head(lat, 1), x = head(lon, 1), size = n()) %>%
+  arrange(desc(size))
+write_csv(nodes_io, path = "nodes_io.csv")
+
+edges_io <- purrr::map(unique(core$project_number), project_edges, df = core)
+edges_io <- do.call(bind_rows, edges_io)
+
+# add geocode metadata and group
+edges_io <- edges_io %>%
+  left_join(select(nodes_io, -size), by = c("from" = "institute_place")) %>%
+  rename(x1 = x, y1 = y) %>%
+  left_join(select(nodes_io, -size), by = c("to" = "institute_place")) %>%
+  rename(x2 = x, y2 = y) %>%
+  group_by(from, to) %>%
+  summarise(
+    x1 = head(x1, 1),
+    y1 = head(y1, 1),
+    x2 = head(x2, 1),
+    y2 = head(y2, 1),
+    strength = n())
+write_csv(edges_io, path = "edges_io.csv")
+```
+
+
+```{r svg_io}
+# plot the nodes and the edges on the world ma
+nodes_io <- fread("nodes_io.csv")
+edges_io <- fread("edges_io.csv")
+
+nodes_io <- anti_join(nodes_io, nodes_ch, by = "institute_place")
+edges_io <- edges_io %>%
+  anti_join(edges_ch, by = c("from" = "from", "to" = "to")) %>%
+  drop_na()
+
+col_dark <- adjustcolor("#252525", alpha = 0.01)
+col_light <- adjustcolor("#08306b", alpha = 0.2)
+edge_pal <- colorRampPalette(c(col_dark, col_light), alpha = TRUE)
+edge_col <- edge_pal(100)
+
+
+svg("core.svg", width = 12, height = 7)
+par(mar = c(0, 0, 0, 0))
+maps::map("world", fill = FALSE, col = rgb(0, 0, 0, .2))
+# map nodes
+points(x = nodes_io$x, y = nodes_io$y, pch = 16,
+  cex = log(nodes_io$size)/3, col = rgb(0, 0, 0, .2))
+
+# map edges
+for (k in 1:nrow(edges_io))  {
+  arc <- gcIntermediate(
+    c(edges_io$x1[k], edges_io$y1[k]),
+    c(edges_io$x2[k], edges_io$y2[k]),
+    n = 100, addStartEnd = TRUE)
+  strength <- round(100 * sqrt(edges_io$strength[k]) / max(sqrt(edges_io$strength)))
+  lines(arc, col = edge_col[strength], lwd = strength / 50)
+}
+
+invisible(dev.off())
+```
+
+![world](core.svg)
 
 ## About 
 
