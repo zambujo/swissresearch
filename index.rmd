@@ -1,5 +1,6 @@
 ---
 title: "SNSF Research Network"
+author: Joao
 date: "`r Sys.Date()`"
 output:
   rmdformats::html_clean:
@@ -7,21 +8,14 @@ output:
     code_folding: show
 ---
 
-> Highlighting collaborations in SNSF grants running in 2017.
+**Collaborations in SNSF grants running in 2017.**
 
-```{r init, include=FALSE, cache=FALSE}
+```{r init, message = FALSE, warning = FALSE, prompt = FALSE,}
 if (!require(pacman)) install.packages("pacman")
 p_load("tidyverse", "data.table", "knitr", "rmdformats")
 ## Global options
 options(max.print = "75")
-knitr::opts_chunk$set(
-  echo = TRUE,
-	cache = TRUE,
-  prompt = FALSE,
-  tidy = FALSE,
-  comment = NA,
-  message = FALSE,
-  warning = FALSE)
+knitr::opts_chunk$set(prompt = FALSE, message = FALSE, warning = FALSE)
 opts_knit$set(width = 75)
 YEAR <- 2017
 ```
@@ -37,14 +31,9 @@ p3url <- c(
 purrr::walk2(p3url, saveas, download.file, quiet = TRUE)
 ```
 
-You can download up-to-date SNSF grant data [here](http://p3.snf.ch/Pages/DataAndDocumentation.aspx).  Before reading the datasets in R, however, I recommend using MS Excel (or Libre/Open Office) to fix csv parsing problems.
-
-
-`grants.csv` and `people.csv` correspond to `P3_GrantExport.csv` and `P3_PersonExport.csv`, respectively.  I made sure they read faultlessly and cleaned their headers with the `clean_names()` function from the [`janitor` package](https://github.com/sfirke/janitor).
+SNSF grant data is [here](http://p3.snf.ch/Pages/DataAndDocumentation.aspx). Before parsing the `csv` files in `R`, use Excel to fix parsing errors. `grants.csv` and `people.csv` are copies of `P3_GrantExport.csv` and `P3_PersonExport.csv`, respectively. They read faultlessly and, thanks to [`janitor`](https://github.com/sfirke/janitor), also have clean header names.
 
 ## Grants connecting Switzerland
-
-We want to highlight `r YEAR` grants connecting institutes from different parts of Switzerland and of the world.
 
 ```{r collaborations}
 p_load("lubridate", "stringr")
@@ -86,8 +75,6 @@ head(people)
 
 ## The collaboration network
 
-To show the network in a map, we focus on grants connecting people in different places.
-
 ```{r core}
 # how many distinct places per grant?
 places_per_grant <- group_by(people, project_number) %>%
@@ -103,7 +90,7 @@ core <- people %>%
 head(core)
 ```
 
-We also need the geocodes of all the places of the network.  You find more information on how to get geocode data in `R` [here](https://gis.stackexchange.com/questions/158328/batch-geocoding-in-r) and [here](https://github.com/hrbrmstr/nominatim).  In essence, I use two APIs: `openstreetmaps` and `googe maps` as fallback.  To save the effort of writing html requests, I use dedicated `R` packages to query map data. To speed up the analysis, we will store the geocodes in `geocodes.csv`.
+We need geocodes for all the places listed in the dataset. Information on how to get geocode data in `R` is given [here](https://gis.stackexchange.com/questions/158328/batch-geocoding-in-r) and [here](https://github.com/hrbrmstr/nominatim).  In essence, I use the `google maps` API as a fallback of the `openstreetmaps` API.  To save the effort of writing html requests, I use dedicated `R` packages to query map data. And to speed up the analysis, I store the geocodes in `geocodes.csv`.
 
 ```{r geocodes, eval=FALSE}
 # initialize geocodes as a tibble
@@ -165,8 +152,7 @@ core <- left_join(core, geocodes, by = c("institute_place" = "place"))
 
 ### Swiss collaboration network
 
-Lets show the Swiss network first.  
-The visualization is heavily inspired from [here](http://kateto.net/network-visualization) and/or [here](http://flowingdata.com/2011/05/11/how-to-map-connections-with-great-circles/).
+Credit: [kateto.net](http://kateto.net/network-visualization).
 
 ```{r swisscore, eval = FALSE}
 core_ch <- filter(core, str_detect(addr, "Switzerland$"))
@@ -257,7 +243,7 @@ graphics::text(
 invisible(dev.off())
 ```
 
-![switzerland](core_ch.svg)
+See the map [here](core_ch.svg).
 
 ### International collaboration network
 
@@ -326,8 +312,6 @@ for (k in 1:nrow(edges_io))  {
 invisible(dev.off())
 ```
 
-![world](core.svg)
+See the map [here](core.svg).
 
-## About 
-
-This page uses the `html_cleam` template from the [`prettydoc` package](https://github.com/yixuan/prettydoc).
+> This page uses the `html_cleam` template from the [`prettydoc` package](https://github.com/yixuan/prettydoc).
