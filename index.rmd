@@ -216,15 +216,20 @@ edges <- edges %>%
     strength = n())
 
 head(edges)
+```
+
+
+
+```{r svg}
 # plot the nodes and the edges on the map of Switzerland
 p_load("maps", "mapdata", "geosphere")
 
-col_dark <- adjustcolor("#800026", alpha = 0.3)
-col_light <- adjustcolor("#feb24c", alpha = 0.3)
+col_dark <- adjustcolor("#252525", alpha = 0.05)
+col_light <- adjustcolor("#08306b", alpha = 0.4)
 edge_pal <- colorRampPalette(c(col_dark, col_light), alpha = TRUE)
 edge_col <- edge_pal(100)
 
-svg("core_ch.svg")
+svg("core_ch.svg", width = 12, height = 7)
 par(mar = c(0, 0, 0, 0))
 maps::map(database = "worldHires", regions = "Switzerland",
           fill = FALSE, col = rgb(0, 0, 0, .2))
@@ -238,8 +243,8 @@ for (k in 1:nrow(edges))  {
     c(edges$x1[k], edges$y1[k]),
     c(edges$x2[k], edges$y2[k]),
     n = 100, addStartEnd = TRUE)
-  strength <- round(100 * edges$strength[k] / max(edges$strength))
-  lines(arc, col = edge_col[strength], lwd = sqrt(strength) / 2)
+  strength <- round(100 * sqrt(edges$strength[k]) / max(sqrt(edges$strength)))
+  lines(arc, col = edge_col[strength], lwd = strength / 10)
 }
 # label main cities
 cities <- c("Zürich", "Lausanne", "Bern", "Genève", "Basel", "Fribourg", "Neuchâtel", "St. Gallen", "Lugano", "Luzern", "Winterthur")
@@ -252,6 +257,8 @@ invisible(dev.off())
 ```
 
 ![switzerland](core_ch.svg)
+
+
 
 ## About 
 
