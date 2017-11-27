@@ -4,7 +4,7 @@ author: Joao
 date: "`r Sys.Date()`"
 output:
   rmdformats::html_clean:
-    highlight: tango
+    highlight: kate
     code_folding: show
 ---
 
@@ -46,11 +46,10 @@ trange <- ymd(c(str_c(YEAR, "-01-01"), str_c(YEAR, "-12-31")))
 # find grants running in that time range
 grants <- grants %>%
   select(
-    project_number, discipline_number, start_date, end_date) %>%
+    project_number, start_date, end_date) %>%
   mutate(
     start_date = ymd(str_sub(start_date, 1, 10)),
-    end_date = ymd(str_sub(end_date, 1, 10)),
-    domain = as.integer(str_extract_all(discipline_number, "^[0-9]"))) %>%
+    end_date = ymd(str_sub(end_date, 1, 10))) %>%
   filter(start_date <= trange[2], end_date >= trange[1])
 
 head(grants)
@@ -152,7 +151,7 @@ core <- left_join(core, geocodes, by = c("institute_place" = "place"))
 
 ### Swiss collaboration network
 
-Credit: [kateto.net](http://kateto.net/network-visualization).
+Credits: [kateto.net](http://kateto.net/network-visualization).
 
 ```{r swisscore, eval = FALSE}
 core_ch <- filter(core, str_detect(addr, "Switzerland$"))
@@ -243,7 +242,7 @@ graphics::text(
 invisible(dev.off())
 ```
 
-See the map [here](core_ch.svg).
+**Click to see the map [here](core_ch.svg).**
 
 ### International collaboration network
 
@@ -277,7 +276,7 @@ write_csv(edges_io, path = "edges_io.csv")
 
 
 ```{r svg_io}
-# plot the nodes and the edges on the world ma
+# plot the nodes and the edges on the world map
 nodes_io <- fread("nodes_io.csv")
 edges_io <- fread("edges_io.csv")
 
@@ -290,7 +289,6 @@ col_dark <- adjustcolor("#252525", alpha = 0.01)
 col_light <- adjustcolor("#08306b", alpha = 0.2)
 edge_pal <- colorRampPalette(c(col_dark, col_light), alpha = TRUE)
 edge_col <- edge_pal(100)
-
 
 svg("core.svg", width = 12, height = 7)
 par(mar = c(0, 0, 0, 0))
@@ -312,6 +310,9 @@ for (k in 1:nrow(edges_io))  {
 invisible(dev.off())
 ```
 
-See the map [here](core.svg).
+**Click to see the map [here](core.svg).**
 
-> This page uses the `html_cleam` template from the [`prettydoc` package](https://github.com/yixuan/prettydoc).
+
+> This page uses the `html_clean` template from the [`prettydoc` package](https://github.com/yixuan/prettydoc).
+
+> Go to the [GitHub repo](https://github.com/zambujo/swissresearch/).
