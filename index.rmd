@@ -1,10 +1,10 @@
 ---
 title: "SNSF Research Network"
-author: Joao
-date: "`r Sys.Date()`"
 output:
   rmdformats::html_clean:
-    highlight: kate
+    self_contained: true
+    lightbox: true
+    highlight: tango
     code_folding: show
 ---
 
@@ -312,7 +312,4 @@ invisible(dev.off())
 
 **Click to see the map [here](core.svg).**
 
-
-> This page uses the `html_clean` template from the [`prettydoc` package](https://github.com/yixuan/prettydoc).
-
-> Go to the [GitHub repo](https://github.com/zambujo/swissresearch/).
+[Source](https://github.com/zambujo/swissresearch/). Last updated: `r Sys.Date()`.
