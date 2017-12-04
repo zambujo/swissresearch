@@ -123,95 +123,18 @@ img {
 </div>
 
 <div id="content">
-<p><strong>Collaborations in SNSF grants running in 2017.</strong></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span> (<span class="op">!</span><span class="kw">require</span>(pacman)) <span class="kw">install.packages</span>(<span class="st">&quot;pacman&quot;</span>)
-<span class="kw">p_load</span>(<span class="st">&quot;tidyverse&quot;</span>, <span class="st">&quot;data.table&quot;</span>, <span class="st">&quot;knitr&quot;</span>, <span class="st">&quot;rmdformats&quot;</span>)
-## Global options
-<span class="kw">options</span>(<span class="dt">max.print =</span> <span class="st">&quot;75&quot;</span>)
-knitr<span class="op">::</span>opts_chunk<span class="op">$</span><span class="kw">set</span>(<span class="dt">prompt =</span> <span class="ot">FALSE</span>, <span class="dt">message =</span> <span class="ot">FALSE</span>, <span class="dt">warning =</span> <span class="ot">FALSE</span>)
-opts_knit<span class="op">$</span><span class="kw">set</span>(<span class="dt">width =</span> <span class="dv">75</span>)
-YEAR &lt;-<span class="st"> </span><span class="dv">2017</span></code></pre></div>
+<blockquote>
+<p>Mapping Collaborations in Research Projects Funded by the SNSF in 2017.</p>
+</blockquote>
 <div id="data" class="section level2">
 <h2>Data</h2>
+<p>SNSF grant data is <a href="http://p3.snf.ch/Pages/DataAndDocumentation.aspx">here</a>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">p3url &lt;-<span class="st"> </span><span class="kw">c</span>(
   <span class="st">&quot;http://p3.snf.ch/P3Export/P3_GrantExport.csv&quot;</span>,
   <span class="st">&quot;http://p3.snf.ch/P3Export/P3_PersonExport.csv&quot;</span>)
 <span class="co"># &quot;http://p3.snf.ch/P3Export/P3_CollaborationExport.csv&quot;)</span>
 
 purrr<span class="op">::</span><span class="kw">walk2</span>(p3url, saveas, download.file, <span class="dt">quiet =</span> <span class="ot">TRUE</span>)</code></pre></div>
-<p>SNSF grant data is <a href="http://p3.snf.ch/Pages/DataAndDocumentation.aspx">here</a>. Before parsing the <code>csv</code> files in <code>R</code>, use Excel to fix parsing errors. <code>grants.csv</code> and <code>people.csv</code> are copies of <code>P3_GrantExport.csv</code> and <code>P3_PersonExport.csv</code>, respectively. They read faultlessly and, thanks to <a href="https://github.com/sfirke/janitor"><code>janitor</code></a>, also have clean header names.</p>
-</div>
-<div id="grants-connecting-switzerland" class="section level2">
-<h2>Grants connecting Switzerland</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">p_load</span>(<span class="st">&quot;lubridate&quot;</span>, <span class="st">&quot;stringr&quot;</span>)
-grants &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;grants.csv&quot;</span>)
-people &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;people.csv&quot;</span>)
-
-<span class="co"># focus on a time range</span>
-trange &lt;-<span class="st"> </span><span class="kw">ymd</span>(<span class="kw">c</span>(<span class="kw">str_c</span>(YEAR, <span class="st">&quot;-01-01&quot;</span>), <span class="kw">str_c</span>(YEAR, <span class="st">&quot;-12-31&quot;</span>)))
-
-<span class="co"># find grants running in that time range</span>
-grants &lt;-<span class="st"> </span>grants <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(
-    project_number, start_date, end_date) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(
-    <span class="dt">start_date =</span> <span class="kw">ymd</span>(<span class="kw">str_sub</span>(start_date, <span class="dv">1</span>, <span class="dv">10</span>)),
-    <span class="dt">end_date =</span> <span class="kw">ymd</span>(<span class="kw">str_sub</span>(end_date, <span class="dv">1</span>, <span class="dv">10</span>))) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">filter</span>(start_date <span class="op">&lt;=</span><span class="st"> </span>trange[<span class="dv">2</span>], end_date <span class="op">&gt;=</span><span class="st"> </span>trange[<span class="dv">1</span>])
-
-<span class="kw">head</span>(grants)</code></pre></div>
-<pre><code>##   project_number start_date   end_date
-## 1         128565 2011-03-01 2018-02-28
-## 2         129572 2011-01-01 2017-02-28
-## 3         133815 2012-04-01 2017-03-31
-## 4         135192 2012-07-01 2018-04-30
-## 5         135970 2014-01-01 2017-12-31
-## 6         136707 2012-02-01 2017-05-31</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># find the people involved in those grants</span>
-people &lt;-<span class="st"> </span>people <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(person_id_snsf, institute_place, <span class="kw">starts_with</span>(<span class="st">&quot;projects&quot;</span>)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">filter</span>(institute_place <span class="op">!=</span><span class="st"> &quot;&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>projects_as_responsible_applicant) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">unite</span>(project_number, <span class="kw">starts_with</span>(<span class="st">&quot;projects&quot;</span>), <span class="dt">sep =</span> <span class="st">&quot;;&quot;</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(
-    <span class="dt">institute_place =</span> <span class="kw">str_replace_all</span>(institute_place, <span class="st">&quot; Cedex(.*)?| [0-9]{1,2}&quot;</span>, <span class="st">&quot;&quot;</span>),
-    <span class="dt">project_number =</span> <span class="kw">str_replace_all</span>(project_number, <span class="st">&quot;[;]+&quot;</span>, <span class="st">&quot;;&quot;</span>),
-    <span class="dt">project_number =</span> <span class="kw">str_replace_all</span>(project_number, <span class="st">&quot;^[;]|[;]$|NA&quot;</span>, <span class="st">&quot;&quot;</span>),
-    <span class="dt">project_number =</span> <span class="kw">str_split</span>(project_number, <span class="st">&quot;;&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">unnest</span>() <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">project_number =</span> <span class="kw">as.integer</span>(project_number)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">semi_join</span>(grants, <span class="dt">by =</span> <span class="st">&quot;project_number&quot;</span>)
-
-<span class="kw">head</span>(people)</code></pre></div>
-<pre><code>##   person_id_snsf institute_place project_number
-## 1         587432       Stavanger         171200
-## 2         702008        Fribourg         175960
-## 3         687469           Basel         170809
-## 4         642410        Lausanne         153952
-## 5         642410        Lausanne         153990
-## 6          54956          Tirana         152346</code></pre>
-</div>
-<div id="the-collaboration-network" class="section level2">
-<h2>The collaboration network</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># how many distinct places per grant?</span>
-places_per_grant &lt;-<span class="st"> </span><span class="kw">group_by</span>(people, project_number) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">summarise</span>(<span class="dt">n_places =</span> <span class="kw">n_distinct</span>(institute_place))
-
-<span class="co"># network core: projects involving multiple places (n_places &gt; 1)</span>
-core &lt;-<span class="st"> </span>people <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>person_id_snsf) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">semi_join</span>(<span class="kw">filter</span>(places_per_grant, n_places <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>), <span class="dt">by =</span> <span class="st">&quot;project_number&quot;</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">arrange</span>(project_number) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">distinct</span>()
-
-<span class="kw">head</span>(core)</code></pre></div>
-<pre><code>##   institute_place project_number
-## 1        Konstanz         128565
-## 2            Bern         128565
-## 3          Berlin         129572
-## 4           Basel         129572
-## 5      St. Gallen         135970
-## 6         Rostock         135970</code></pre>
 <p>We need geocodes for all the places listed in the dataset. Information on how to get geocode data in <code>R</code> is given <a href="https://gis.stackexchange.com/questions/158328/batch-geocoding-in-r">here</a> and <a href="https://github.com/hrbrmstr/nominatim">here</a>. In essence, I use the <code>google maps</code> API as a fallback of the <code>openstreetmaps</code> API. To save the effort of writing html requests, I use dedicated <code>R</code> packages to query map data. And to speed up the analysis, I store the geocodes in <code>geocodes.csv</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># initialize geocodes as a tibble</span>
 geocodes &lt;-<span class="st"> </span><span class="kw">tibble</span>(
@@ -221,7 +144,7 @@ geocodes &lt;-<span class="st"> </span><span class="kw">tibble</span>(
   <span class="dt">addr =</span> <span class="kw">rep</span>(<span class="ot">NA_character_</span>, <span class="kw">n_distinct</span>(core<span class="op">$</span>institute_place)),
   <span class="dt">id =</span> <span class="kw">rep</span>(<span class="ot">NA_character_</span>, <span class="kw">n_distinct</span>(core<span class="op">$</span>institute_place)))
 
-<span class="kw">p_load_gh</span>(<span class="st">&quot;hrbrmstr/nominatim&quot;</span>, <span class="st">&quot;ggmap&quot;</span>) <span class="co"># ggmap requires `libpng16-dev` in ubuntu</span>
+<span class="kw">p_load_gh</span>(<span class="st">&quot;hrbrmstr/nominatim&quot;</span>, <span class="st">&quot;ggmap&quot;</span>) <span class="co"># ggmap needs `libpng16-dev` (on linux)</span>
 osm_key &lt;-<span class="st"> </span><span class="kw">readLines</span>(<span class="st">&quot;mapquest.key&quot;</span>)
 
 <span class="co"># openstreetmap api</span>
@@ -260,62 +183,58 @@ google &lt;-<span class="st"> </span><span class="cf">function</span>(query) {
 }
 <span class="co"># it works despite of some warnings...</span>
 <span class="kw">write_csv</span>(geocodes, <span class="dt">path =</span> <span class="st">&quot;geocodes.csv&quot;</span>)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">geocodes &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;geocodes.csv&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">drop_na</span>()
-<span class="kw">head</span>(geocodes)</code></pre></div>
-<pre><code>##               place       lat       lon
-## 1: 69120 Heidelberg 49.416449  8.688807
-## 2:            Aarau 47.392715  8.044445
-## 3:         Aarhus C 56.149628 10.213405
-## 4:         Aberdeen 57.145245 -2.091375
-## 5:          Abidjan  5.409118 -4.042210
-## 6:    Abomey-Calavi  6.415369  2.306228
-##                                                                                    addr
-## 1: Neuenheim, Heidelberg, Regierungsbezirk Karlsruhe, Baden-Württemberg, 69120, Germany
-## 2:                                       Aarau, Bezirk Aarau, Aargau, 5000, Switzerland
-## 3:                         Aarhus, Aarhus Municipality, Central Denmark Region, Denmark
-## 4:                                    Aberdeen, Aberdeenshire, Scotland, United Kingdom
-## 5:                                                               Abidjan, Côte d'Ivoire
-## 6:                                                     Abomey-Calavi, Atlantique, Benin
-##           id
-## 1: 151274321
-## 2: 151329375
-## 3:    133615
-## 4:    113817
-## 5: 151537515
-## 6: 151484207</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># add geocode data to the network core</span>
-core &lt;-<span class="st"> </span><span class="kw">left_join</span>(core, geocodes, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;institute_place&quot;</span> =<span class="st"> &quot;place&quot;</span>))</code></pre></div>
-<div id="swiss-collaboration-network" class="section level3">
-<h3>Swiss collaboration network</h3>
+</div>
+<div id="collaborations-within-switzerland" class="section level2">
+<h2>Collaborations within Switzerland</h2>
 <p>Credits: <a href="http://kateto.net/network-visualization">kateto.net</a>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">core_ch &lt;-<span class="st"> </span><span class="kw">filter</span>(core, <span class="kw">str_detect</span>(addr, <span class="st">&quot;Switzerland$&quot;</span>))
-<span class="co"># find projects on more than one place in Switzerland</span>
-ch_per_grant &lt;-<span class="st"> </span><span class="kw">group_by</span>(core_ch, project_number) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">summarise</span>(<span class="dt">n_places =</span> <span class="kw">n_distinct</span>(institute_place))
-<span class="co"># swiss core: projects involving multiple places in Switzerland</span>
-core_ch &lt;-<span class="st"> </span><span class="kw">semi_join</span>(core_ch, <span class="kw">filter</span>(ch_per_grant, n_places <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>), <span class="dt">by =</span> <span class="st">&quot;project_number&quot;</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">geocodes &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;geocodes.csv&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">drop_na</span>()
 
-<span class="co"># nodes (places) ----------------------------------------------------------</span>
-nodes_ch &lt;-<span class="st"> </span><span class="kw">group_by</span>(core_ch, institute_place) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">summarise</span>(<span class="dt">y =</span> <span class="kw">head</span>(lat, <span class="dv">1</span>), <span class="dt">x =</span> <span class="kw">head</span>(lon, <span class="dv">1</span>), <span class="dt">size =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span>
+core &lt;-<span class="st"> </span>core <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">left_join</span>(geocodes, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;institute_place&quot;</span> =<span class="st"> &quot;place&quot;</span>)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(
+    <span class="dt">country =</span> <span class="kw">map_chr</span>(<span class="kw">strsplit</span>(addr, <span class="st">&quot;, &quot;</span>), tail, <span class="dt">n =</span> <span class="dv">1</span>),
+    <span class="co"># unify names between google maps and openstreetmaps</span>
+    <span class="dt">country =</span> <span class="kw">str_replace_all</span>(country, <span class="st">&quot;^United Kingdom$&quot;</span>, <span class="st">&quot;UK&quot;</span>),
+    <span class="dt">country =</span> <span class="kw">str_replace_all</span>(country, <span class="st">&quot;^Russian Federation$&quot;</span>, <span class="st">&quot;Russia&quot;</span>),
+    <span class="dt">country =</span> <span class="kw">str_replace_all</span>(country, <span class="st">&quot;^United States of America$&quot;</span>, <span class="st">&quot;USA&quot;</span>),
+    <span class="dt">country =</span> <span class="kw">str_replace_all</span>(country, <span class="st">&quot;^The Netherlands$&quot;</span>, <span class="st">&quot;Netherlands&quot;</span>))
+
+<span class="co"># build graph elements ----------------------------------------------------</span>
+
+make_nodes &lt;-<span class="st"> </span><span class="cf">function</span>(df_core) {
+  <span class="kw">group_by</span>(df_core, institute_place) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarise</span>(<span class="dt">x =</span> <span class="kw">head</span>(lon, <span class="dv">1</span>), <span class="dt">y =</span> <span class="kw">head</span>(lat, <span class="dv">1</span>), <span class="dt">size =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">arrange</span>(<span class="kw">desc</span>(size))
-<span class="kw">head</span>(nodes_ch)
-<span class="kw">write_csv</span>(nodes_ch, <span class="dt">path =</span> <span class="st">&quot;nodes_ch.csv&quot;</span>)
-
-<span class="kw">p_load</span>(<span class="st">&quot;magrittr&quot;</span>)
-project_edges &lt;-<span class="st"> </span><span class="cf">function</span>(number, df) {
-  links &lt;-<span class="st"> </span><span class="kw">filter</span>(df, project_number <span class="op">==</span><span class="st"> </span>number) <span class="op">%&gt;%</span>
-<span class="st">    </span><span class="kw">select</span>(institute_place) <span class="op">%$%</span>
-<span class="st">    </span><span class="kw">combn</span>(<span class="kw">sort</span>(institute_place), <span class="dt">m =</span> <span class="dv">2</span>)
-  <span class="kw">tibble</span>(<span class="dt">from =</span> links[<span class="dv">1</span>, ],
-         <span class="dt">to =</span> links[<span class="dv">2</span>,]) <span class="op">%&gt;%</span>
-<span class="st">    </span><span class="kw">mutate</span>(<span class="dt">number =</span> number) <span class="op">%&gt;%</span>
-<span class="st">    </span><span class="kw">select</span>(number, <span class="kw">everything</span>())
 }
 
+make_edges &lt;-<span class="st"> </span><span class="cf">function</span>(df_core) {
+  triangulation &lt;-<span class="st"> </span><span class="cf">function</span>(proj_no, df) {
+    links &lt;-<span class="st"> </span><span class="kw">filter</span>(df, project_number <span class="op">==</span><span class="st"> </span>proj_no) <span class="op">%&gt;%</span>
+<span class="st">      </span><span class="kw">select</span>(institute_place) <span class="op">%$%</span>
+<span class="st">      </span><span class="kw">combn</span>(<span class="kw">sort</span>(institute_place), <span class="dt">m =</span> <span class="dv">2</span>)
+    <span class="kw">data.frame</span>(
+    <span class="dt">number =</span> <span class="kw">rep</span>(proj_no, <span class="kw">ncol</span>(links)),
+    <span class="dt">from =</span> links[<span class="dv">1</span>, ],
+    <span class="dt">to =</span> links[<span class="dv">2</span>,],
+    <span class="dt">stringsAsFactors =</span> <span class="ot">FALSE</span>)
+  }
+  unique_numbers &lt;-<span class="st"> </span><span class="kw">unique</span>(df_core<span class="op">$</span>project_number)
+  edges_ch &lt;-<span class="st"> </span>purrr<span class="op">::</span><span class="kw">map</span>(unique_numbers, triangulation, <span class="dt">df =</span> df_core)
+  <span class="kw">do.call</span>(bind_rows, edges_ch)
+}
+
+<span class="co"># Switzerland -------------------------------------------------------------</span>
+
+core_ch &lt;-<span class="st"> </span><span class="kw">filter</span>(core, country <span class="op">==</span><span class="st"> &quot;Switzerland&quot;</span>)
+<span class="co"># swiss core: projects involving multiple places in Switzerland</span>
+core_ch &lt;-<span class="st"> </span>core_ch <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">semi_join</span>(<span class="kw">filter</span>(<span class="kw">loc_count</span>(core_ch), n_loc <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>), <span class="dt">by =</span> <span class="st">&quot;project_number&quot;</span>)
+
+<span class="co"># nodes (places) ----------------------------------------------------------</span>
+nodes_ch &lt;-<span class="st"> </span><span class="kw">make_nodes</span>(core_ch)
 <span class="co"># edges (grants) ----------------------------------------------------------</span>
-edges_ch &lt;-<span class="st"> </span>purrr<span class="op">::</span><span class="kw">map</span>(<span class="kw">unique</span>(core_ch<span class="op">$</span>project_number), project_edges, <span class="dt">df =</span> core_ch)
-edges_ch &lt;-<span class="st"> </span><span class="kw">do.call</span>(bind_rows, edges_ch)
+edges_ch &lt;-<span class="st"> </span><span class="kw">make_edges</span>(core_ch)
+
 <span class="co"># add geocode metadata and group</span>
 edges_ch &lt;-<span class="st"> </span>edges_ch <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">left_join</span>(<span class="kw">select</span>(nodes_ch, <span class="op">-</span>size), <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;from&quot;</span> =<span class="st"> &quot;institute_place&quot;</span>)) <span class="op">%&gt;%</span>
@@ -324,65 +243,112 @@ edges_ch &lt;-<span class="st"> </span>edges_ch <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">rename</span>(<span class="dt">x2 =</span> x, <span class="dt">y2 =</span> y) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">group_by</span>(from, to) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarise</span>(
-    <span class="dt">x1 =</span> <span class="kw">head</span>(x1, <span class="dv">1</span>),
-    <span class="dt">y1 =</span> <span class="kw">head</span>(y1, <span class="dv">1</span>),
-    <span class="dt">x2 =</span> <span class="kw">head</span>(x2, <span class="dv">1</span>),
-    <span class="dt">y2 =</span> <span class="kw">head</span>(y2, <span class="dv">1</span>),
-    <span class="dt">strength =</span> <span class="kw">n</span>())
-<span class="kw">head</span>(edges_ch)
-<span class="kw">write_csv</span>(edges_ch, <span class="dt">path =</span> <span class="st">&quot;edges_ch.csv&quot;</span>)</code></pre></div>
+    <span class="dt">x1 =</span> <span class="kw">head</span>(x1, <span class="dv">1</span>), <span class="dt">y1 =</span> <span class="kw">head</span>(y1, <span class="dv">1</span>),
+    <span class="dt">x2 =</span> <span class="kw">head</span>(x2, <span class="dv">1</span>), <span class="dt">y2 =</span> <span class="kw">head</span>(y2, <span class="dv">1</span>),
+    <span class="dt">strength =</span> <span class="kw">n</span>())</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># plot the nodes and the edges on the map of Switzerland</span>
-<span class="kw">p_load</span>(<span class="st">&quot;maps&quot;</span>, <span class="st">&quot;mapdata&quot;</span>, <span class="st">&quot;geosphere&quot;</span>)
-nodes_ch &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;nodes_ch.csv&quot;</span>)
-edges_ch &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;edges_ch.csv&quot;</span>)
 
-col_dark &lt;-<span class="st"> </span><span class="kw">adjustcolor</span>(<span class="st">&quot;#252525&quot;</span>, <span class="dt">alpha =</span> <span class="fl">0.05</span>)
-col_light &lt;-<span class="st"> </span><span class="kw">adjustcolor</span>(<span class="st">&quot;#08306b&quot;</span>, <span class="dt">alpha =</span> <span class="fl">0.4</span>)
-edge_pal &lt;-<span class="st"> </span><span class="kw">colorRampPalette</span>(<span class="kw">c</span>(col_dark, col_light), <span class="dt">alpha =</span> <span class="ot">TRUE</span>)
-edge_col &lt;-<span class="st"> </span><span class="kw">edge_pal</span>(<span class="dv">100</span>)
+<span class="kw">p_load</span>(<span class="st">&quot;maps&quot;</span>, <span class="st">&quot;mapdata&quot;</span>, <span class="st">&quot;geosphere&quot;</span>)
+
+<span class="co"># color ramp</span>
+make_ramp &lt;-<span class="st"> </span><span class="cf">function</span>(<span class="dt">alpha1 =</span> .<span class="dv">45</span>, <span class="dt">alpha2 =</span> .<span class="dv">2</span>, 
+                      <span class="dt">col1 =</span> <span class="st">&quot;#003399&quot;</span>, <span class="dt">col2 =</span> <span class="st">&quot;#252525&quot;</span>, 
+                      <span class="dt">n_shades =</span> <span class="dv">100</span>) {
+  col1 =<span class="st"> </span><span class="kw">adjustcolor</span>(col1, <span class="dt">alpha.f =</span> alpha1)
+  col2 =<span class="st"> </span><span class="kw">adjustcolor</span>(col2, <span class="dt">alpha.f =</span> alpha2)
+  <span class="kw">colorRampPalette</span>(<span class="kw">c</span>(col2, col1), <span class="dt">alpha =</span> <span class="ot">TRUE</span>)(n_shades)
+}
+<span class="co"># map nodes</span>
+add_nodes &lt;-<span class="st"> </span><span class="cf">function</span>(nodes, ramp, <span class="dt">cex_scale =</span> <span class="dv">3</span>) {
+  <span class="kw">with</span>(nodes, {
+    <span class="co"># scale node size</span>
+    s &lt;-<span class="st"> </span>size <span class="op">/</span><span class="st">  </span><span class="kw">max</span>(size)
+    <span class="kw">points</span>(<span class="dt">x =</span> x, <span class="dt">y =</span> y, 
+           <span class="dt">pch =</span> <span class="dv">16</span>, <span class="dt">cex =</span> cex_scale <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(s), <span class="dt">col =</span> ramp[<span class="kw">round</span>(<span class="dv">100</span> <span class="op">*</span><span class="st"> </span>s)])
+  })
+}
+<span class="co"># map edges</span>
+add_edges &lt;-<span class="st"> </span><span class="cf">function</span>(edges, ramp, <span class="dt">lwd_scale =</span> <span class="dv">4</span>) {
+  <span class="kw">with</span>(edges, {
+    <span class="cf">for</span> (k <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(edges))  {
+      arc &lt;-<span class="st"> </span><span class="kw">gcIntermediate</span>(<span class="kw">c</span>(x1[k], y1[k]), <span class="kw">c</span>(x2[k], y2[k]), <span class="dt">n =</span> <span class="dv">100</span>, <span class="dt">addStartEnd =</span> <span class="ot">TRUE</span>)
+      s &lt;-<span class="st"> </span>strength[k] <span class="op">/</span><span class="st"> </span><span class="kw">max</span>(strength)
+      <span class="kw">lines</span>(arc, <span class="dt">col =</span> ramp[<span class="kw">round</span>(<span class="dv">100</span> <span class="op">*</span><span class="st"> </span>s)], <span class="dt">lwd =</span> lwd_scale <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(s))
+    }
+  })
+}
 
 <span class="kw">svg</span>(<span class="st">&quot;core_ch.svg&quot;</span>, <span class="dt">width =</span> <span class="dv">12</span>, <span class="dt">height =</span> <span class="dv">7</span>)
 <span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))
-maps<span class="op">::</span><span class="kw">map</span>(<span class="dt">database =</span> <span class="st">&quot;worldHires&quot;</span>, <span class="dt">regions =</span> <span class="st">&quot;Switzerland&quot;</span>,
-          <span class="dt">fill =</span> <span class="ot">FALSE</span>, <span class="dt">col =</span> <span class="kw">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, .<span class="dv">2</span>))
+maps<span class="op">::</span><span class="kw">map</span>(<span class="dt">database =</span> <span class="st">&quot;worldHires&quot;</span>, <span class="dt">regions =</span> <span class="st">&quot;Switzerland&quot;</span>, <span class="dt">fill =</span> <span class="ot">FALSE</span>, <span class="dt">col =</span> <span class="kw">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, .<span class="dv">3</span>))
+edge_col &lt;-<span class="st"> </span><span class="kw">make_ramp</span>()
+<span class="kw">add_nodes</span>(nodes_ch, <span class="dt">ramp =</span> edge_col)
+<span class="kw">add_edges</span>(edges_ch, <span class="dt">ramp =</span> edge_col)
 
-<span class="co"># map nodes</span>
-<span class="kw">points</span>(<span class="dt">x =</span> nodes_ch<span class="op">$</span>x, <span class="dt">y =</span> nodes_ch<span class="op">$</span>y, <span class="dt">pch =</span> <span class="dv">16</span>,
-  <span class="dt">cex =</span> <span class="kw">log</span>(nodes_ch<span class="op">$</span>size)<span class="op">/</span><span class="dv">3</span>, <span class="dt">col =</span> <span class="kw">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, .<span class="dv">2</span>))
-<span class="co"># map edges</span>
-<span class="cf">for</span> (k <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(edges_ch))  {
-  arc &lt;-<span class="st"> </span><span class="kw">gcIntermediate</span>(
-    <span class="kw">c</span>(edges_ch<span class="op">$</span>x1[k], edges_ch<span class="op">$</span>y1[k]),
-    <span class="kw">c</span>(edges_ch<span class="op">$</span>x2[k], edges_ch<span class="op">$</span>y2[k]),
-    <span class="dt">n =</span> <span class="dv">100</span>, <span class="dt">addStartEnd =</span> <span class="ot">TRUE</span>)
-  strength &lt;-<span class="st"> </span><span class="kw">round</span>(<span class="dv">100</span> <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(edges_ch<span class="op">$</span>strength[k]) <span class="op">/</span><span class="st"> </span><span class="kw">max</span>(<span class="kw">sqrt</span>(edges_ch<span class="op">$</span>strength)))
-  <span class="kw">lines</span>(arc, <span class="dt">col =</span> edge_col[strength], <span class="dt">lwd =</span> strength <span class="op">/</span><span class="st"> </span><span class="dv">10</span>)
-}
-
-<span class="co"># label main cities</span>
-cities &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Zürich&quot;, &quot;</span>Lausanne<span class="st">&quot;, &quot;</span>Bern<span class="st">&quot;, &quot;</span>Genève<span class="st">&quot;, </span>
-<span class="st">            &quot;</span>Basel<span class="st">&quot;, &quot;</span>Fribourg<span class="st">&quot;, &quot;</span>Neuchâtel<span class="st">&quot;, &quot;</span>St. Gallen<span class="st">&quot;, </span>
-<span class="st">            &quot;</span>Lugano<span class="st">&quot;, &quot;</span>Luzern<span class="st">&quot;, &quot;</span>Winterthur<span class="st">&quot;)</span>
-
-<span class="st">city_nodes &lt;- filter(nodes_ch, institute_place %in% cities)</span>
-<span class="st">graphics::text(</span>
-<span class="st">  city_nodes$x, city_nodes$y, </span>
-<span class="st">  labels = city_nodes$institute_place, pos = 3, cex = .7, col = rgb(0, 0, 0, .66))</span>
+<span class="co"># label university cities</span>
+uni &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Zürich&quot;, &quot;</span>Lausanne<span class="st">&quot;, &quot;</span>Bern<span class="st">&quot;, &quot;</span>Genève<span class="st">&quot;,&quot;</span>Basel<span class="st">&quot;, &quot;</span>Fribourg<span class="st">&quot;, &quot;</span>Neuchâtel<span class="st">&quot;, &quot;</span>St. Gallen<span class="st">&quot;, &quot;</span>Lugano<span class="st">&quot;, &quot;</span>Luzern<span class="st">&quot;)</span>
+<span class="st">uni_nodes &lt;- filter(nodes_ch, institute_place %in% uni)</span>
+<span class="st">with(uni_nodes, {</span>
+<span class="st">  text(x, y, institute_place, </span>
+<span class="st">    pos = 3, cex = .7, col = rgb(0, 0, 0, .66))</span>
+<span class="st">})</span>
 <span class="st">invisible(dev.off())</span></code></pre></div>
 <p><strong>Click to see the map <a href="core_ch.svg">here</a>.</strong></p>
 </div>
-<div id="international-collaboration-network" class="section level3">
-<h3>International collaboration network</h3>
-<p>Same as above, but for the rest of the world.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nodes_io &lt;-<span class="st"> </span><span class="kw">group_by</span>(core, institute_place) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">summarise</span>(<span class="dt">y =</span> <span class="kw">head</span>(lat, <span class="dv">1</span>), <span class="dt">x =</span> <span class="kw">head</span>(lon, <span class="dv">1</span>), <span class="dt">size =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">arrange</span>(<span class="kw">desc</span>(size))
-<span class="kw">write_csv</span>(nodes_io, <span class="dt">path =</span> <span class="st">&quot;nodes_io.csv&quot;</span>)
+<div id="collaborations-within-europe" class="section level2">
+<h2>Collaborations within Europe</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">close_countries &lt;-<span class="st"> </span><span class="kw">c</span>(
+  <span class="st">&quot;Switzerland&quot;</span>, <span class="st">&quot;Austria&quot;</span>, <span class="st">&quot;Belgium&quot;</span>, <span class="st">&quot;Bulgaria&quot;</span>, <span class="st">&quot;Croatia&quot;</span>,
+  <span class="st">&quot;Cyprus&quot;</span>, <span class="st">&quot;Czech Republic&quot;</span>, <span class="st">&quot;Denmark&quot;</span>, <span class="st">&quot;Estonia&quot;</span>, <span class="st">&quot;Finland&quot;</span>, <span class="st">&quot;France&quot;</span>,
+  <span class="st">&quot;Germany&quot;</span>, <span class="st">&quot;Greece&quot;</span>, <span class="st">&quot;Hungary&quot;</span>, <span class="st">&quot;Ireland&quot;</span>, <span class="st">&quot;Italy&quot;</span>, <span class="st">&quot;Latvia&quot;</span>, 
+  <span class="st">&quot;Lithuania&quot;</span>, <span class="st">&quot;Luxembourg&quot;</span>, <span class="st">&quot;Malta&quot;</span>, <span class="st">&quot;Netherlands&quot;</span>, <span class="st">&quot;Poland&quot;</span>, <span class="st">&quot;Portugal&quot;</span>,
+  <span class="st">&quot;Romania&quot;</span>, <span class="st">&quot;Slovakia&quot;</span>, <span class="st">&quot;Slovenia&quot;</span>, <span class="st">&quot;Spain&quot;</span>, <span class="st">&quot;Sweden&quot;</span>, <span class="st">&quot;UK&quot;</span>,
+  <span class="st">&quot;Serbia&quot;</span>, <span class="st">&quot;Bosnia and Herzegovina&quot;</span>, <span class="st">&quot;Moldova&quot;</span>, <span class="st">&quot;Norway&quot;</span>,
+  <span class="st">&quot;Georgia&quot;</span>, <span class="st">&quot;Turkey&quot;</span>, <span class="st">&quot;Armenia&quot;</span>, <span class="st">&quot;Ukraine&quot;</span>, <span class="st">&quot;Iceland&quot;</span>, <span class="st">&quot;Montenegro&quot;</span>,
+  <span class="st">&quot;Albania&quot;</span>, <span class="st">&quot;Macedonia&quot;</span>, <span class="st">&quot;Lichtenstein&quot;</span>, <span class="st">&quot;Andorra&quot;</span>)
+not_mapped &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Israel&quot;</span>, <span class="st">&quot;Morocco&quot;</span>, <span class="st">&quot;Algeria&quot;</span>, <span class="st">&quot;Tunisia&quot;</span>, <span class="st">&quot;Libya&quot;</span>, 
+                <span class="st">&quot;Egypt&quot;</span>, <span class="st">&quot;Jordan&quot;</span>, <span class="st">&quot;Lebanon&quot;</span>, <span class="st">&quot;Syria&quot;</span>, <span class="st">&quot;Russia&quot;</span>)
 
-edges_io &lt;-<span class="st"> </span>purrr<span class="op">::</span><span class="kw">map</span>(<span class="kw">unique</span>(core<span class="op">$</span>project_number), project_edges, <span class="dt">df =</span> core)
-edges_io &lt;-<span class="st"> </span><span class="kw">do.call</span>(bind_rows, edges_io)
+core_eu &lt;-<span class="st"> </span><span class="kw">filter</span>(core, country <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(close_countries, not_mapped))
+core_eu &lt;-<span class="st"> </span>core_eu <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">semi_join</span>(<span class="kw">filter</span>(<span class="kw">loc_count</span>(core_eu), n_loc <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>), <span class="dt">by =</span> <span class="st">&quot;project_number&quot;</span>)
+
+nodes_eu &lt;-<span class="st"> </span><span class="kw">make_nodes</span>(core_eu)
+edges_eu &lt;-<span class="st"> </span><span class="kw">make_edges</span>(core_eu)
 
 <span class="co"># add geocode metadata and group</span>
+edges_eu &lt;-<span class="st"> </span>edges_eu <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">left_join</span>(<span class="kw">select</span>(nodes_eu, <span class="op">-</span>size), <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;from&quot;</span> =<span class="st"> &quot;institute_place&quot;</span>)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">rename</span>(<span class="dt">x1 =</span> x, <span class="dt">y1 =</span> y) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">left_join</span>(<span class="kw">select</span>(nodes_eu, <span class="op">-</span>size), <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;to&quot;</span> =<span class="st"> &quot;institute_place&quot;</span>)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">rename</span>(<span class="dt">x2 =</span> x, <span class="dt">y2 =</span> y) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(from, to) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">summarise</span>(
+    <span class="dt">x1 =</span> <span class="kw">head</span>(x1, <span class="dv">1</span>), <span class="dt">y1 =</span> <span class="kw">head</span>(y1, <span class="dv">1</span>),
+    <span class="dt">x2 =</span> <span class="kw">head</span>(x2, <span class="dv">1</span>), <span class="dt">y2 =</span> <span class="kw">head</span>(y2, <span class="dv">1</span>),
+    <span class="dt">strength =</span> <span class="kw">n</span>())
+
+nodes_eu &lt;-<span class="st"> </span><span class="kw">anti_join</span>(nodes_eu, nodes_ch, <span class="dt">by =</span> <span class="st">&quot;institute_place&quot;</span>)
+edges_eu &lt;-<span class="st"> </span>edges_eu <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">anti_join</span>(edges_ch, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;from&quot;</span> =<span class="st"> &quot;from&quot;</span>, <span class="st">&quot;to&quot;</span> =<span class="st"> &quot;to&quot;</span>)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">drop_na</span>()
+
+<span class="kw">svg</span>(<span class="st">&quot;core_eu.svg&quot;</span>, <span class="dt">width =</span> <span class="dv">12</span>, <span class="dt">height =</span> <span class="dv">7</span>)
+<span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))
+<span class="co"># maps::map(database = &quot;worldHires&quot;, </span>
+maps<span class="op">::</span><span class="kw">map</span>(<span class="dt">regions =</span> <span class="kw">str_c</span>(close_countries, <span class="dt">collapse =</span> <span class="st">&quot;|&quot;</span>), 
+          <span class="dt">fill =</span> <span class="ot">FALSE</span>, <span class="dt">col =</span> <span class="kw">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, .<span class="dv">2</span>), 
+          <span class="dt">xlim =</span> <span class="kw">c</span>(<span class="op">-</span><span class="dv">25</span>, <span class="dv">50</span>), <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">25</span>, <span class="dv">70</span>))
+edge_col &lt;-<span class="st"> </span><span class="kw">make_ramp</span>(<span class="fl">0.5</span>, <span class="fl">0.1</span>)
+<span class="kw">add_nodes</span>(nodes_eu, <span class="dt">ramp =</span> edge_col, <span class="dt">cex_scale =</span> <span class="fl">1.2</span>)
+<span class="kw">add_edges</span>(edges_eu, <span class="dt">ramp =</span> edge_col, <span class="dt">lwd_scale =</span> <span class="fl">1.2</span>)
+<span class="kw">invisible</span>(<span class="kw">dev.off</span>())</code></pre></div>
+<p><strong>Click to see the map <a href="core_eu.svg">here</a>.</strong></p>
+</div>
+<div id="collaborations-with-the-rest-of-the-world" class="section level2">
+<h2>Collaborations with the rest of the world</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nodes_io &lt;-<span class="st"> </span><span class="kw">make_nodes</span>(core)
+edges_io &lt;-<span class="st"> </span><span class="kw">make_edges</span>(core)
 edges_io &lt;-<span class="st"> </span>edges_io <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">left_join</span>(<span class="kw">select</span>(nodes_io, <span class="op">-</span>size), <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;from&quot;</span> =<span class="st"> &quot;institute_place&quot;</span>)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">rename</span>(<span class="dt">x1 =</span> x, <span class="dt">y1 =</span> y) <span class="op">%&gt;%</span>
@@ -390,47 +356,28 @@ edges_io &lt;-<span class="st"> </span>edges_io <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">rename</span>(<span class="dt">x2 =</span> x, <span class="dt">y2 =</span> y) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">group_by</span>(from, to) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarise</span>(
-    <span class="dt">x1 =</span> <span class="kw">head</span>(x1, <span class="dv">1</span>),
-    <span class="dt">y1 =</span> <span class="kw">head</span>(y1, <span class="dv">1</span>),
-    <span class="dt">x2 =</span> <span class="kw">head</span>(x2, <span class="dv">1</span>),
-    <span class="dt">y2 =</span> <span class="kw">head</span>(y2, <span class="dv">1</span>),
+    <span class="dt">x1 =</span> <span class="kw">head</span>(x1, <span class="dv">1</span>), <span class="dt">y1 =</span> <span class="kw">head</span>(y1, <span class="dv">1</span>),
+    <span class="dt">x2 =</span> <span class="kw">head</span>(x2, <span class="dv">1</span>), <span class="dt">y2 =</span> <span class="kw">head</span>(y2, <span class="dv">1</span>),
     <span class="dt">strength =</span> <span class="kw">n</span>())
-<span class="kw">write_csv</span>(edges_io, <span class="dt">path =</span> <span class="st">&quot;edges_io.csv&quot;</span>)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># plot the nodes and the edges on the world map</span>
-nodes_io &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;nodes_io.csv&quot;</span>)
-edges_io &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;edges_io.csv&quot;</span>)
 
-nodes_io &lt;-<span class="st"> </span><span class="kw">anti_join</span>(nodes_io, nodes_ch, <span class="dt">by =</span> <span class="st">&quot;institute_place&quot;</span>)
+nodes_io &lt;-<span class="st"> </span>nodes_io <span class="op">%&gt;%</span>
+<span class="co">#   anti_join(nodes_eu, by = &quot;institute_place&quot;) %&gt;%</span>
+<span class="st">  </span><span class="kw">anti_join</span>(nodes_ch, <span class="dt">by =</span> <span class="st">&quot;institute_place&quot;</span>)
 edges_io &lt;-<span class="st"> </span>edges_io <span class="op">%&gt;%</span>
+<span class="co">#   anti_join(edges_eu, by = c(&quot;from&quot; = &quot;from&quot;, &quot;to&quot; = &quot;to&quot;)) %&gt;%</span>
 <span class="st">  </span><span class="kw">anti_join</span>(edges_ch, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;from&quot;</span> =<span class="st"> &quot;from&quot;</span>, <span class="st">&quot;to&quot;</span> =<span class="st"> &quot;to&quot;</span>)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">drop_na</span>()
-
-col_dark &lt;-<span class="st"> </span><span class="kw">adjustcolor</span>(<span class="st">&quot;#252525&quot;</span>, <span class="dt">alpha =</span> <span class="fl">0.01</span>)
-col_light &lt;-<span class="st"> </span><span class="kw">adjustcolor</span>(<span class="st">&quot;#08306b&quot;</span>, <span class="dt">alpha =</span> <span class="fl">0.2</span>)
-edge_pal &lt;-<span class="st"> </span><span class="kw">colorRampPalette</span>(<span class="kw">c</span>(col_dark, col_light), <span class="dt">alpha =</span> <span class="ot">TRUE</span>)
-edge_col &lt;-<span class="st"> </span><span class="kw">edge_pal</span>(<span class="dv">100</span>)
 
 <span class="kw">svg</span>(<span class="st">&quot;core.svg&quot;</span>, <span class="dt">width =</span> <span class="dv">12</span>, <span class="dt">height =</span> <span class="dv">7</span>)
 <span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))
 maps<span class="op">::</span><span class="kw">map</span>(<span class="st">&quot;world&quot;</span>, <span class="dt">fill =</span> <span class="ot">FALSE</span>, <span class="dt">col =</span> <span class="kw">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, .<span class="dv">2</span>))
 <span class="co"># map nodes</span>
-<span class="kw">points</span>(<span class="dt">x =</span> nodes_io<span class="op">$</span>x, <span class="dt">y =</span> nodes_io<span class="op">$</span>y, <span class="dt">pch =</span> <span class="dv">16</span>,
-  <span class="dt">cex =</span> <span class="kw">log</span>(nodes_io<span class="op">$</span>size)<span class="op">/</span><span class="dv">3</span>, <span class="dt">col =</span> <span class="kw">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, .<span class="dv">2</span>))
-
-<span class="co"># map edges</span>
-<span class="cf">for</span> (k <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(edges_io))  {
-  arc &lt;-<span class="st"> </span><span class="kw">gcIntermediate</span>(
-    <span class="kw">c</span>(edges_io<span class="op">$</span>x1[k], edges_io<span class="op">$</span>y1[k]),
-    <span class="kw">c</span>(edges_io<span class="op">$</span>x2[k], edges_io<span class="op">$</span>y2[k]),
-    <span class="dt">n =</span> <span class="dv">100</span>, <span class="dt">addStartEnd =</span> <span class="ot">TRUE</span>)
-  strength &lt;-<span class="st"> </span><span class="kw">round</span>(<span class="dv">100</span> <span class="op">*</span><span class="st"> </span><span class="kw">sqrt</span>(edges_io<span class="op">$</span>strength[k]) <span class="op">/</span><span class="st"> </span><span class="kw">max</span>(<span class="kw">sqrt</span>(edges_io<span class="op">$</span>strength)))
-  <span class="kw">lines</span>(arc, <span class="dt">col =</span> edge_col[strength], <span class="dt">lwd =</span> strength <span class="op">/</span><span class="st"> </span><span class="dv">50</span>)
-}
-
+edge_col &lt;-<span class="st"> </span><span class="kw">make_ramp</span>(<span class="fl">0.5</span>, <span class="fl">0.2</span>)
+<span class="kw">add_nodes</span>(nodes_io, <span class="dt">ramp =</span> edge_col, <span class="dt">cex_scale =</span> .<span class="dv">5</span>)
+<span class="kw">add_edges</span>(edges_io, <span class="dt">ramp =</span> edge_col, <span class="dt">lwd_scale =</span> .<span class="dv">25</span>)
 <span class="kw">invisible</span>(<span class="kw">dev.off</span>())</code></pre></div>
 <p><strong>Click to see the map <a href="core.svg">here</a>.</strong></p>
-<p><a href="https://github.com/zambujo/swissresearch/">Source</a>. Last updated: 2017-11-29.</p>
-</div>
+<p><a href="https://github.com/zambujo/swissresearch/">Source</a>. Last updated: 2017-12-04.</p>
 </div>
 </div>
 
@@ -441,8 +388,9 @@ maps<span class="op">::</span><span class="kw">map</span>(<span class="st">&quot
       	<button type="button" class="close">×</button>
         <ul>
         <li><a href="#data">Data</a></li>
-        <li><a href="#grants-connecting-switzerland">Grants connecting Switzerland</a></li>
-        <li><a href="#the-collaboration-network">The collaboration network</a></li>
+        <li><a href="#collaborations-within-switzerland">Collaborations within Switzerland</a></li>
+        <li><a href="#collaborations-within-europe">Collaborations within Europe</a></li>
+        <li><a href="#collaborations-with-the-rest-of-the-world">Collaborations with the rest of the world</a></li>
         </ul>
       </div>
     </div>
