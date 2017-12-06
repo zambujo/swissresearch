@@ -2,23 +2,27 @@
 title: "SNSF Research Network"
 output:
   rmdformats::html_clean:
-    self_contained: true
-    lightbox: true
-    highlight: tango
+    self_contained: false
     code_folding: show
-editor_options: 
-  chunk_output_type: console
+    highlight: tango
+    thumbnails: true
+    lightbox: true
+    gallery: true
 ---
 
 ```{r init, include=FALSE}
 if (!require(pacman)) install.packages("pacman")
-p_load("tidyverse", "data.table", "knitr", "rmdformats", "magrittr")
+p_load(
+  "tidyverse", "data.table", "knitr", "rmdformats",
+  "magrittr", "lubridate", "stringr")
 
 ## Global options
 options(max.print = "75")
 knitr::opts_chunk$set(prompt = FALSE, message = FALSE, warning = FALSE)
 opts_knit$set(width = 75)
+
 YEAR <- 2017
+trange <- ymd(c(str_c(YEAR, "-01-01"), str_c(YEAR, "-12-31")))
 ```
 
 > Mapping Collaborations in Research Projects Funded by the SNSF in 2017.
@@ -27,34 +31,19 @@ YEAR <- 2017
 
 SNSF grant data is [here](http://p3.snf.ch/Pages/DataAndDocumentation.aspx).
 
-```{r data_download, eval=FALSE}
-p3url <- c(
-  "http://p3.snf.ch/P3Export/P3_GrantExport.csv",
-  "http://p3.snf.ch/P3Export/P3_PersonExport.csv")
-# "http://p3.snf.ch/P3Export/P3_CollaborationExport.csv")
-
-purrr::walk2(p3url, saveas, download.file, quiet = TRUE)
-```
-
-```{r temp, include=FALSE}
-p_load("lubridate", "stringr")
-grants <- fread("grants.csv")
-people <- fread("people.csv")
-
-# focus on a time range
-trange <- ymd(c(str_c(YEAR, "-01-01"), str_c(YEAR, "-12-31")))
-
-# grants in 2017 ----------------------------------------------------------
-grants <- grants %>%
-  select(
-    project_number, start_date, end_date) %>%
-  mutate(
-    start_date = ymd(str_sub(start_date, 1, 10)),
-    end_date = ymd(str_sub(end_date, 1, 10))) %>%
+```{r data_update}
+grants <- read.csv2(
+  url("http://p3.snf.ch/P3Export/P3_GrantExport.csv"),
+  stringsAsFactors = FALSE) %>% 
+  janitor::clean_names() %>%
+  select(project_number, start_date, end_date) %>%
+  mutate(start_date = dmy(start_date), end_date = dmy(end_date)) %>%
   filter(start_date <= trange[2], end_date >= trange[1])
 
-# people/places involved on grants in 2017 --------------------------------
-people <- people %>%
+people <- read.csv2(
+  url("http://p3.snf.ch/P3Export/P3_PersonExport.csv"),
+  stringsAsFactors = FALSE) %>%
+  janitor::clean_names() %>%
   select(
     person_id_snsf, 
     institute_place,
@@ -153,7 +142,7 @@ write_csv(geocodes, path = "geocodes.csv")
 
 Credits: [kateto.net](http://kateto.net/network-visualization).
 
-```{r metadata}
+```{r svg_ch}
 geocodes <- fread("geocodes.csv") %>% drop_na()
 
 core <- core %>% 
@@ -214,12 +203,7 @@ edges_ch <- edges_ch %>%
     x2 = head(x2, 1), y2 = head(y2, 1),
     strength = n())
 
-```
-
-
-
-```{r svg_ch}
-# plot the nodes and the edges on the map of Switzerland
+# mapping -----------------------------------------------------------------
 
 p_load("maps", "mapdata", "geosphere")
 
@@ -251,7 +235,7 @@ add_edges <- function(edges, ramp, lwd_scale = 4) {
   })
 }
 
-svg("core_ch.svg", width = 12, height = 7)
+# svg("core_ch.svg", width = 12, height = 7)
 par(mar = c(0, 0, 0, 0))
 maps::map(database = "worldHires", regions = "Switzerland", fill = FALSE, col = rgb(0, 0, 0, .3))
 edge_col <- make_ramp()
@@ -265,10 +249,8 @@ with(uni_nodes, {
   text(x, y, institute_place, 
     pos = 3, cex = .7, col = rgb(0, 0, 0, .66))
 })
-invisible(dev.off())
+# invisible(dev.off())
 ```
-
-**Click to see the map [here](core_ch.svg).**
 
 ## Collaborations within Europe
 
@@ -309,7 +291,7 @@ edges_eu <- edges_eu %>%
   anti_join(edges_ch, by = c("from" = "from", "to" = "to")) %>%
   drop_na()
 
-svg("core_eu.svg", width = 12, height = 7)
+# svg("core_eu.svg", width = 12, height = 7)
 par(mar = c(0, 0, 0, 0))
 # maps::map(database = "worldHires", 
 maps::map(regions = str_c(close_countries, collapse = "|"), 
@@ -318,14 +300,12 @@ maps::map(regions = str_c(close_countries, collapse = "|"),
 edge_col <- make_ramp(0.5, 0.1)
 add_nodes(nodes_eu, ramp = edge_col, cex_scale = 1.2)
 add_edges(edges_eu, ramp = edge_col, lwd_scale = 1.2)
-invisible(dev.off())
+# invisible(dev.off())
 ```
-
-**Click to see the map [here](core_eu.svg).**
 
 ## Collaborations with the rest of the world
 
-```{r international, eval=FALSE}
+```{r international}
 
 nodes_io <- make_nodes(core)
 edges_io <- make_edges(core)
@@ -348,18 +328,14 @@ edges_io <- edges_io %>%
   anti_join(edges_ch, by = c("from" = "from", "to" = "to")) %>%
   drop_na()
 
-svg("core.svg", width = 12, height = 7)
+# svg("core.svg", width = 12, height = 7)
 par(mar = c(0, 0, 0, 0))
 maps::map("world", fill = FALSE, col = rgb(0, 0, 0, .2))
 # map nodes
 edge_col <- make_ramp(0.5, 0.2)
 add_nodes(nodes_io, ramp = edge_col, cex_scale = .5)
 add_edges(edges_io, ramp = edge_col, lwd_scale = .25)
-invisible(dev.off())
+# invisible(dev.off())
 ```
-
-
-**Click to see the map [here](core.svg).**
-
 
 [Source](https://github.com/zambujo/swissresearch/). Last updated: `r Sys.Date()`.
