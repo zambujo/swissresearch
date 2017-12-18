@@ -12,12 +12,14 @@ output:
 
 ```{r init, include=FALSE}
 if (!require(pacman)) install.packages("pacman")
-p_load(
+if (!require(janitor)) install.packages("janitor")
+
+pacman::p_load(
   "tidyverse", "data.table", "knitr", "rmdformats",
   "magrittr", "lubridate", "stringr")
 
 ## Global options
-options(max.print = "75")
+base::options(max.print = "75")
 knitr::opts_chunk$set(prompt = FALSE, message = FALSE, warning = FALSE)
 opts_knit$set(width = 75)
 
