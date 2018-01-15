@@ -129,21 +129,18 @@ img {
 <div id="data" class="section level2">
 <h2>Data</h2>
 <p>SNSF grant data is <a href="http://p3.snf.ch/Pages/DataAndDocumentation.aspx">here</a>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">grants &lt;-<span class="st"> </span><span class="kw">read.csv2</span>(
-  <span class="kw">url</span>(<span class="st">&quot;http://p3.snf.ch/P3Export/P3_GrantExport.csv&quot;</span>),
-  <span class="dt">stringsAsFactors =</span> <span class="ot">FALSE</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">grants &lt;-<span class="st"> </span>rio<span class="op">::</span><span class="kw">import</span>(<span class="st">&quot;http://p3.snf.ch/P3Export/P3_GrantExport.csv&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span>janitor<span class="op">::</span><span class="kw">clean_names</span>() <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">select</span>(project_number, start_date, end_date) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">start_date =</span> <span class="kw">dmy</span>(start_date), <span class="dt">end_date =</span> <span class="kw">dmy</span>(end_date)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">filter</span>(start_date <span class="op">&lt;=</span><span class="st"> </span>trange[<span class="dv">2</span>], end_date <span class="op">&gt;=</span><span class="st"> </span>trange[<span class="dv">1</span>])
+<span class="st">  </span><span class="kw">filter</span>(start_date <span class="op">&lt;=</span><span class="st"> </span>TIME_WINDOW[<span class="dv">2</span>], end_date <span class="op">&gt;=</span><span class="st"> </span>TIME_WINDOW[<span class="dv">1</span>])
 
-people &lt;-<span class="st"> </span><span class="kw">read.csv2</span>(
-  <span class="kw">url</span>(<span class="st">&quot;http://p3.snf.ch/P3Export/P3_PersonExport.csv&quot;</span>),
-  <span class="dt">stringsAsFactors =</span> <span class="ot">FALSE</span>) <span class="op">%&gt;%</span>
+people &lt;-<span class="st"> </span>rio<span class="op">::</span><span class="kw">import</span>(<span class="st">&quot;http://p3.snf.ch/P3Export/P3_PersonExport.csv&quot;</span>) <span class="op">%&gt;%</span>
 <span class="st">  </span>janitor<span class="op">::</span><span class="kw">clean_names</span>() <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">select</span>(
     person_id_snsf, 
     institute_place,
+    projects_as_responsible_applicant,
     projects_as_applicant, 
     projects_as_partner,
     projects_as_employee) <span class="op">%&gt;%</span>
@@ -162,7 +159,6 @@ people &lt;-<span class="st"> </span><span class="kw">read.csv2</span>(
     <span class="dt">project_number =</span> <span class="kw">str_split</span>(project_number, <span class="st">&quot;;&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">unnest</span>() <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="co"># for consistency with grants</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">project_number =</span> <span class="kw">as.integer</span>(project_number)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">distinct</span>() <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">semi_join</span>(grants, <span class="dt">by =</span> <span class="st">&quot;project_number&quot;</span>)
 
@@ -186,8 +182,8 @@ core &lt;-<span class="st"> </span>people <span class="op">%&gt;%</span>
 ## 2            Bern         128565
 ## 3          Berlin         129572
 ## 4           Basel         129572
-## 5      St. Gallen         135970
-## 6         Rostock         135970</code></pre>
+## 5          Zürich         135192
+## 6      St. Gallen         135192</code></pre>
 <p>We need geocodes for all the places listed in the dataset. Information on how to get geocode data in <code>R</code> is given <a href="https://gis.stackexchange.com/questions/158328/batch-geocoding-in-r">here</a> and <a href="https://github.com/hrbrmstr/nominatim">here</a>. In essence, I use the <code>google maps</code> API as a fallback of the <code>openstreetmaps</code> API. To save the effort of writing html requests, I use dedicated <code>R</code> packages to query map data. And to speed up the analysis, I store the geocodes in <code>geocodes.csv</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># initialize geocodes as a tibble</span>
 geocodes &lt;-<span class="st"> </span><span class="kw">tibble</span>(
@@ -235,12 +231,12 @@ google &lt;-<span class="st"> </span><span class="cf">function</span>(query) {
   }
 }
 <span class="co"># it works despite of some warnings...</span>
-<span class="kw">write_csv</span>(geocodes, <span class="dt">path =</span> <span class="st">&quot;geocodes.csv&quot;</span>)</code></pre></div>
+rio<span class="op">::</span><span class="kw">export</span>(geocodes, <span class="st">&quot;geocodes.csv&quot;</span>)</code></pre></div>
 </div>
 <div id="collaborations-within-switzerland" class="section level2">
 <h2>Collaborations within Switzerland</h2>
 <p>Credits: <a href="http://kateto.net/network-visualization">kateto.net</a>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">geocodes &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;geocodes.csv&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">drop_na</span>()
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">geocodes &lt;-<span class="st"> </span>rio<span class="op">::</span><span class="kw">import</span>(<span class="st">&quot;geocodes.csv&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">drop_na</span>()
 
 core &lt;-<span class="st"> </span>core <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">left_join</span>(geocodes, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;institute_place&quot;</span> =<span class="st"> &quot;place&quot;</span>)) <span class="op">%&gt;%</span>
@@ -332,7 +328,7 @@ add_edges &lt;-<span class="st"> </span><span class="cf">function</span>(edges, 
   })
 }
 
-<span class="co"># svg(&quot;core_ch.svg&quot;, width = 12, height = 7)</span>
+<span class="co"># svg(&quot;map_ch.svg&quot;, width = 12, height = 7)</span>
 <span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))
 maps<span class="op">::</span><span class="kw">map</span>(<span class="dt">database =</span> <span class="st">&quot;worldHires&quot;</span>, <span class="dt">regions =</span> <span class="st">&quot;Switzerland&quot;</span>, <span class="dt">fill =</span> <span class="ot">FALSE</span>, <span class="dt">col =</span> <span class="kw">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, .<span class="dv">3</span>))
 edge_col &lt;-<span class="st"> </span><span class="kw">make_ramp</span>()
@@ -387,7 +383,7 @@ edges_eu &lt;-<span class="st"> </span>edges_eu <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">anti_join</span>(edges_ch, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;from&quot;</span> =<span class="st"> &quot;from&quot;</span>, <span class="st">&quot;to&quot;</span> =<span class="st"> &quot;to&quot;</span>)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">drop_na</span>()
 
-<span class="co"># svg(&quot;core_eu.svg&quot;, width = 12, height = 7)</span>
+<span class="co"># svg(&quot;map_eu.svg&quot;, width = 12, height = 7)</span>
 <span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))
 <span class="co"># maps::map(database = &quot;worldHires&quot;, </span>
 maps<span class="op">::</span><span class="kw">map</span>(<span class="dt">regions =</span> <span class="kw">str_c</span>(close_countries, <span class="dt">collapse =</span> <span class="st">&quot;|&quot;</span>), 
@@ -422,7 +418,7 @@ edges_io &lt;-<span class="st"> </span>edges_io <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">anti_join</span>(edges_ch, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;from&quot;</span> =<span class="st"> &quot;from&quot;</span>, <span class="st">&quot;to&quot;</span> =<span class="st"> &quot;to&quot;</span>)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">drop_na</span>()
 
-<span class="co"># svg(&quot;core.svg&quot;, width = 12, height = 7)</span>
+<span class="co"># svg(&quot;map_int.svg&quot;, width = 12, height = 7)</span>
 <span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))
 maps<span class="op">::</span><span class="kw">map</span>(<span class="st">&quot;world&quot;</span>, <span class="dt">fill =</span> <span class="ot">FALSE</span>, <span class="dt">col =</span> <span class="kw">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, .<span class="dv">2</span>))
 <span class="co"># map nodes</span>
@@ -431,7 +427,7 @@ edge_col &lt;-<span class="st"> </span><span class="kw">make_ramp</span>(<span c
 <span class="kw">add_edges</span>(edges_io, <span class="dt">ramp =</span> edge_col, <span class="dt">lwd_scale =</span> .<span class="dv">25</span>)</code></pre></div>
 <p><img src="index_files/figure-html/international-1.png" width="576" /></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># invisible(dev.off())</span></code></pre></div>
-<p><a href="https://github.com/zambujo/swissresearch/">Source</a>. Last updated: 2017-12-06.</p>
+<p><a href="https://github.com/zambujo/swissresearch/">Source</a>. Last updated: 2018-01-15.</p>
 </div>
 </div>
 

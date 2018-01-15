@@ -18,13 +18,16 @@ pacman::p_load(
   "tidyverse", "data.table", "knitr", "rmdformats",
   "magrittr", "lubridate", "stringr")
 
+
+p_load_gh("leeper/rio") # for dev version
+
 ## Global options
 base::options(max.print = "75")
 knitr::opts_chunk$set(prompt = FALSE, message = FALSE, warning = FALSE)
-opts_knit$set(width = 75)
+knitr::opts_knit$set(width = 75)
 
 YEAR <- 2017
-trange <- ymd(c(str_c(YEAR, "-01-01"), str_c(YEAR, "-12-31")))
+TIME_WINDOW <- lubridate::ymd(c(str_c(YEAR, "-01-01"), str_c(YEAR, "-12-31")))
 ```
 
 > Mapping Collaborations in Research Projects Funded by the SNSF in 2017.
@@ -34,21 +37,18 @@ trange <- ymd(c(str_c(YEAR, "-01-01"), str_c(YEAR, "-12-31")))
 SNSF grant data is [here](http://p3.snf.ch/Pages/DataAndDocumentation.aspx).
 
 ```{r data_update}
-grants <- read.csv2(
-  url("http://p3.snf.ch/P3Export/P3_GrantExport.csv"),
-  stringsAsFactors = FALSE) %>% 
+grants <- rio::import("http://p3.snf.ch/P3Export/P3_GrantExport.csv") %>% 
   janitor::clean_names() %>%
   select(project_number, start_date, end_date) %>%
   mutate(start_date = dmy(start_date), end_date = dmy(end_date)) %>%
-  filter(start_date <= trange[2], end_date >= trange[1])
+  filter(start_date <= TIME_WINDOW[2], end_date >= TIME_WINDOW[1])
 
-people <- read.csv2(
-  url("http://p3.snf.ch/P3Export/P3_PersonExport.csv"),
-  stringsAsFactors = FALSE) %>%
+people <- rio::import("http://p3.snf.ch/P3Export/P3_PersonExport.csv") %>%
   janitor::clean_names() %>%
   select(
     person_id_snsf, 
     institute_place,
+    projects_as_responsible_applicant,
     projects_as_applicant, 
     projects_as_partner,
     projects_as_employee) %>%
@@ -67,7 +67,6 @@ people <- read.csv2(
     project_number = str_split(project_number, ";")) %>% 
   unnest() %>%
   # for consistency with grants
-  mutate(project_number = as.integer(project_number)) %>%
   distinct() %>%
   semi_join(grants, by = "project_number")
 
@@ -137,7 +136,7 @@ for (k in seq_along(geocodes$place)) {
   }
 }
 # it works despite of some warnings...
-write_csv(geocodes, path = "geocodes.csv")
+rio::export(geocodes, "geocodes.csv")
 ```
 
 ## Collaborations within Switzerland
@@ -145,7 +144,7 @@ write_csv(geocodes, path = "geocodes.csv")
 Credits: [kateto.net](http://kateto.net/network-visualization).
 
 ```{r svg_ch}
-geocodes <- fread("geocodes.csv") %>% drop_na()
+geocodes <- rio::import("geocodes.csv") %>% drop_na()
 
 core <- core %>% 
   left_join(geocodes, by = c("institute_place" = "place")) %>%
@@ -237,7 +236,7 @@ add_edges <- function(edges, ramp, lwd_scale = 4) {
   })
 }
 
-# svg("core_ch.svg", width = 12, height = 7)
+# svg("map_ch.svg", width = 12, height = 7)
 par(mar = c(0, 0, 0, 0))
 maps::map(database = "worldHires", regions = "Switzerland", fill = FALSE, col = rgb(0, 0, 0, .3))
 edge_col <- make_ramp()
@@ -293,7 +292,7 @@ edges_eu <- edges_eu %>%
   anti_join(edges_ch, by = c("from" = "from", "to" = "to")) %>%
   drop_na()
 
-# svg("core_eu.svg", width = 12, height = 7)
+# svg("map_eu.svg", width = 12, height = 7)
 par(mar = c(0, 0, 0, 0))
 # maps::map(database = "worldHires", 
 maps::map(regions = str_c(close_countries, collapse = "|"), 
@@ -330,7 +329,7 @@ edges_io <- edges_io %>%
   anti_join(edges_ch, by = c("from" = "from", "to" = "to")) %>%
   drop_na()
 
-# svg("core.svg", width = 12, height = 7)
+# svg("map_int.svg", width = 12, height = 7)
 par(mar = c(0, 0, 0, 0))
 maps::map("world", fill = FALSE, col = rgb(0, 0, 0, .2))
 # map nodes
