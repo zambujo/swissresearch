@@ -22,9 +22,9 @@ pacman::p_load(
 p_load_gh("leeper/rio") # for dev version
 
 ## Global options
-base::options(max.print = "75")
 knitr::opts_chunk$set(prompt = FALSE, message = FALSE, warning = FALSE)
 knitr::opts_knit$set(width = 75)
+base::options(max.print = "75") # 75 lines max
 
 YEAR <- 2017
 TIME_WINDOW <- lubridate::ymd(c(str_c(YEAR, "-01-01"), str_c(YEAR, "-12-31")))
@@ -37,12 +37,14 @@ TIME_WINDOW <- lubridate::ymd(c(str_c(YEAR, "-01-01"), str_c(YEAR, "-12-31")))
 SNSF grant data is [here](http://p3.snf.ch/Pages/DataAndDocumentation.aspx).
 
 ```{r data_update}
+# grants <- read_rds("grants.rds.bz2") %>%
 grants <- rio::import("http://p3.snf.ch/P3Export/P3_GrantExport.csv") %>% 
   janitor::clean_names() %>%
   select(project_number, start_date, end_date) %>%
   mutate(start_date = dmy(start_date), end_date = dmy(end_date)) %>%
-  filter(start_date <= TIME_WINDOW[2], end_date >= TIME_WINDOW[1])
+  filter(end_date >= TIME_WINDOW[1], start_date <= TIME_WINDOW[2])
 
+# people <- read_rds("ppl.rds.bz2") %>%
 people <- rio::import("http://p3.snf.ch/P3Export/P3_PersonExport.csv") %>%
   janitor::clean_names() %>%
   select(
@@ -51,14 +53,16 @@ people <- rio::import("http://p3.snf.ch/P3Export/P3_PersonExport.csv") %>%
     projects_as_responsible_applicant,
     projects_as_applicant, 
     projects_as_partner,
+    projects_as_practice_partner,
     projects_as_employee) %>%
-  # remove missing affiliations
-  filter(institute_place != "", !is.na(institute_place)) %>%
   # for consistency
-  mutate(projects_as_partner = as.character(projects_as_partner)) %>%
   unite(project_number, starts_with("projects"), sep = ";") %>%
+  # remove missing affiliations
+  filter(institute_place != "") %>%
   mutate(
-    institute_place = str_replace_all(institute_place, " Cedex(.*)?| [0-9]{1,2}", ""),
+    institute_place = str_replace_all(
+      institute_place,
+      "^[A-Z]{2}[ ]| [(](.*)[)]| Cedex(.*)?| [0-9]{1,2}", ""),
     # unite() includes NAs...
     project_number = str_replace_all(project_number, "NA", ""),
     project_number = str_replace_all(project_number, "[;]+", ";"),
@@ -120,7 +124,7 @@ google <- function(query) {
 
 for (k in seq_along(geocodes$place)) {
   cat("   ........ ", k, ": ", geocodes$place[k], "\n")
-  info <- osm(geocodes$place[k], osm_key)
+  info <- osm(iconv(geocodes$place[k], to="ASCII//TRANSLIT"), osm_key)
   cat("   osm info: ", info, "\n")
   # fallback
   if (is.na(info)) {

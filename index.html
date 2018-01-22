@@ -129,28 +129,33 @@ img {
 <div id="data" class="section level2">
 <h2>Data</h2>
 <p>SNSF grant data is <a href="http://p3.snf.ch/Pages/DataAndDocumentation.aspx">here</a>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">grants &lt;-<span class="st"> </span>rio<span class="op">::</span><span class="kw">import</span>(<span class="st">&quot;http://p3.snf.ch/P3Export/P3_GrantExport.csv&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span>janitor<span class="op">::</span><span class="kw">clean_names</span>() <span class="op">%&gt;%</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># grants &lt;- rio::import(&quot;http://p3.snf.ch/P3Export/P3_GrantExport.csv&quot;) %&gt;% </span>
+<span class="co">#   janitor::clean_names() %&gt;%</span>
+grants &lt;-<span class="st"> </span><span class="kw">read_rds</span>(<span class="st">&quot;grants.rds.bz2&quot;</span>) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">select</span>(project_number, start_date, end_date) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">start_date =</span> <span class="kw">dmy</span>(start_date), <span class="dt">end_date =</span> <span class="kw">dmy</span>(end_date)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">filter</span>(start_date <span class="op">&lt;=</span><span class="st"> </span>TIME_WINDOW[<span class="dv">2</span>], end_date <span class="op">&gt;=</span><span class="st"> </span>TIME_WINDOW[<span class="dv">1</span>])
+<span class="st">  </span><span class="kw">filter</span>(end_date <span class="op">&gt;=</span><span class="st"> </span>TIME_WINDOW[<span class="dv">1</span>], start_date <span class="op">&lt;=</span><span class="st"> </span>TIME_WINDOW[<span class="dv">2</span>])
 
-people &lt;-<span class="st"> </span>rio<span class="op">::</span><span class="kw">import</span>(<span class="st">&quot;http://p3.snf.ch/P3Export/P3_PersonExport.csv&quot;</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span>janitor<span class="op">::</span><span class="kw">clean_names</span>() <span class="op">%&gt;%</span>
+<span class="co"># people &lt;- rio::import(&quot;http://p3.snf.ch/P3Export/P3_PersonExport.csv&quot;) %&gt;%</span>
+<span class="co">#   janitor::clean_names() %&gt;%</span>
+
+people &lt;-<span class="st"> </span><span class="kw">read_rds</span>(<span class="st">&quot;ppl.rds.bz2&quot;</span>) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">select</span>(
     person_id_snsf, 
     institute_place,
     projects_as_responsible_applicant,
     projects_as_applicant, 
     projects_as_partner,
+    projects_as_practice_partner,
     projects_as_employee) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="co"># remove missing affiliations</span>
-<span class="st">  </span><span class="kw">filter</span>(institute_place <span class="op">!=</span><span class="st"> &quot;&quot;</span>, <span class="op">!</span><span class="kw">is.na</span>(institute_place)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="co"># for consistency</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">projects_as_partner =</span> <span class="kw">as.character</span>(projects_as_partner)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">unite</span>(project_number, <span class="kw">starts_with</span>(<span class="st">&quot;projects&quot;</span>), <span class="dt">sep =</span> <span class="st">&quot;;&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="co"># remove missing affiliations</span>
+<span class="st">  </span><span class="kw">filter</span>(institute_place <span class="op">!=</span><span class="st"> &quot;&quot;</span>) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">mutate</span>(
-    <span class="dt">institute_place =</span> <span class="kw">str_replace_all</span>(institute_place, <span class="st">&quot; Cedex(.*)?| [0-9]{1,2}&quot;</span>, <span class="st">&quot;&quot;</span>),
+    <span class="dt">institute_place =</span> <span class="kw">str_replace_all</span>(
+      institute_place,
+      <span class="st">&quot;^[A-Z]{2}[ ]| [(](.*)[)]| Cedex(.*)?| [0-9]{1,2}&quot;</span>, <span class="st">&quot;&quot;</span>),
     <span class="co"># unite() includes NAs...</span>
     <span class="dt">project_number =</span> <span class="kw">str_replace_all</span>(project_number, <span class="st">&quot;NA&quot;</span>, <span class="st">&quot;&quot;</span>),
     <span class="dt">project_number =</span> <span class="kw">str_replace_all</span>(project_number, <span class="st">&quot;[;]+&quot;</span>, <span class="st">&quot;;&quot;</span>),
@@ -215,7 +220,7 @@ google &lt;-<span class="st"> </span><span class="cf">function</span>(query) {
 
 <span class="cf">for</span> (k <span class="cf">in</span> <span class="kw">seq_along</span>(geocodes<span class="op">$</span>place)) {
   <span class="kw">cat</span>(<span class="st">&quot;   ........ &quot;</span>, k, <span class="st">&quot;: &quot;</span>, geocodes<span class="op">$</span>place[k], <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)
-  info &lt;-<span class="st"> </span><span class="kw">osm</span>(geocodes<span class="op">$</span>place[k], osm_key)
+  info &lt;-<span class="st"> </span><span class="kw">osm</span>(<span class="kw">iconv</span>(geocodes<span class="op">$</span>place[k], <span class="dt">to=</span><span class="st">&quot;ASCII//TRANSLIT&quot;</span>), osm_key)
   <span class="kw">cat</span>(<span class="st">&quot;   osm info: &quot;</span>, info, <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)
   <span class="co"># fallback</span>
   <span class="cf">if</span> (<span class="kw">is.na</span>(info)) {
@@ -328,7 +333,7 @@ add_edges &lt;-<span class="st"> </span><span class="cf">function</span>(edges, 
   })
 }
 
-<span class="co"># svg(&quot;map_ch.svg&quot;, width = 12, height = 7)</span>
+<span class="kw">svg</span>(<span class="st">&quot;map_ch.svg&quot;</span>)
 <span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))
 maps<span class="op">::</span><span class="kw">map</span>(<span class="dt">database =</span> <span class="st">&quot;worldHires&quot;</span>, <span class="dt">regions =</span> <span class="st">&quot;Switzerland&quot;</span>, <span class="dt">fill =</span> <span class="ot">FALSE</span>, <span class="dt">col =</span> <span class="kw">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, .<span class="dv">3</span>))
 edge_col &lt;-<span class="st"> </span><span class="kw">make_ramp</span>()
@@ -341,9 +346,8 @@ uni &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&qu
 <span class="st">with(uni_nodes, {</span>
 <span class="st">  text(x, y, institute_place, </span>
 <span class="st">    pos = 3, cex = .7, col = rgb(0, 0, 0, .66))</span>
-<span class="st">})</span></code></pre></div>
-<p><img src="index_files/figure-html/svg_ch-1.png" width="576" /></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># invisible(dev.off())</span></code></pre></div>
+<span class="st">})</span>
+<span class="st">invisible(dev.off())</span></code></pre></div>
 </div>
 <div id="collaborations-within-europe" class="section level2">
 <h2>Collaborations within Europe</h2>
@@ -383,7 +387,7 @@ edges_eu &lt;-<span class="st"> </span>edges_eu <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">anti_join</span>(edges_ch, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;from&quot;</span> =<span class="st"> &quot;from&quot;</span>, <span class="st">&quot;to&quot;</span> =<span class="st"> &quot;to&quot;</span>)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">drop_na</span>()
 
-<span class="co"># svg(&quot;map_eu.svg&quot;, width = 12, height = 7)</span>
+<span class="kw">svg</span>(<span class="st">&quot;map_eu.svg&quot;</span>, <span class="dt">width =</span> <span class="dv">12</span>, <span class="dt">height =</span> <span class="dv">7</span>)
 <span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))
 <span class="co"># maps::map(database = &quot;worldHires&quot;, </span>
 maps<span class="op">::</span><span class="kw">map</span>(<span class="dt">regions =</span> <span class="kw">str_c</span>(close_countries, <span class="dt">collapse =</span> <span class="st">&quot;|&quot;</span>), 
@@ -391,9 +395,8 @@ maps<span class="op">::</span><span class="kw">map</span>(<span class="dt">regio
           <span class="dt">xlim =</span> <span class="kw">c</span>(<span class="op">-</span><span class="dv">25</span>, <span class="dv">50</span>), <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">25</span>, <span class="dv">70</span>))
 edge_col &lt;-<span class="st"> </span><span class="kw">make_ramp</span>(<span class="fl">0.5</span>, <span class="fl">0.1</span>)
 <span class="kw">add_nodes</span>(nodes_eu, <span class="dt">ramp =</span> edge_col, <span class="dt">cex_scale =</span> <span class="fl">1.2</span>)
-<span class="kw">add_edges</span>(edges_eu, <span class="dt">ramp =</span> edge_col, <span class="dt">lwd_scale =</span> <span class="fl">1.2</span>)</code></pre></div>
-<p><img src="index_files/figure-html/core_eu-1.png" width="576" /></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># invisible(dev.off())</span></code></pre></div>
+<span class="kw">add_edges</span>(edges_eu, <span class="dt">ramp =</span> edge_col, <span class="dt">lwd_scale =</span> <span class="fl">1.2</span>)
+<span class="kw">invisible</span>(<span class="kw">dev.off</span>())</code></pre></div>
 </div>
 <div id="collaborations-with-the-rest-of-the-world" class="section level2">
 <h2>Collaborations with the rest of the world</h2>
@@ -418,16 +421,15 @@ edges_io &lt;-<span class="st"> </span>edges_io <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">anti_join</span>(edges_ch, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;from&quot;</span> =<span class="st"> &quot;from&quot;</span>, <span class="st">&quot;to&quot;</span> =<span class="st"> &quot;to&quot;</span>)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">drop_na</span>()
 
-<span class="co"># svg(&quot;map_int.svg&quot;, width = 12, height = 7)</span>
+<span class="kw">svg</span>(<span class="st">&quot;map_int.svg&quot;</span>, <span class="dt">width =</span> <span class="dv">12</span>, <span class="dt">height =</span> <span class="dv">7</span>)
 <span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>))
 maps<span class="op">::</span><span class="kw">map</span>(<span class="st">&quot;world&quot;</span>, <span class="dt">fill =</span> <span class="ot">FALSE</span>, <span class="dt">col =</span> <span class="kw">rgb</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, .<span class="dv">2</span>))
 <span class="co"># map nodes</span>
 edge_col &lt;-<span class="st"> </span><span class="kw">make_ramp</span>(<span class="fl">0.5</span>, <span class="fl">0.2</span>)
 <span class="kw">add_nodes</span>(nodes_io, <span class="dt">ramp =</span> edge_col, <span class="dt">cex_scale =</span> .<span class="dv">5</span>)
-<span class="kw">add_edges</span>(edges_io, <span class="dt">ramp =</span> edge_col, <span class="dt">lwd_scale =</span> .<span class="dv">25</span>)</code></pre></div>
-<p><img src="index_files/figure-html/international-1.png" width="576" /></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># invisible(dev.off())</span></code></pre></div>
-<p><a href="https://github.com/zambujo/swissresearch/">Source</a>. Last updated: 2018-01-15.</p>
+<span class="kw">add_edges</span>(edges_io, <span class="dt">ramp =</span> edge_col, <span class="dt">lwd_scale =</span> .<span class="dv">25</span>)
+<span class="kw">invisible</span>(<span class="kw">dev.off</span>())</code></pre></div>
+<p><a href="https://github.com/zambujo/swissresearch/">Source</a>. Last updated: 2018-01-22.</p>
 </div>
 </div>
 
