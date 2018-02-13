@@ -18,7 +18,6 @@ pacman::p_load(
   "tidyverse", "data.table", "knitr", "rmdformats",
   "magrittr", "lubridate", "stringr")
 
-
 p_load_gh("leeper/rio") # for dev version
 
 ## Global options
@@ -26,8 +25,7 @@ knitr::opts_chunk$set(prompt = FALSE, message = FALSE, warning = FALSE)
 knitr::opts_knit$set(width = 75)
 base::options(max.print = "75") # 75 lines max
 
-YEAR <- 2017
-TIME_WINDOW <- lubridate::ymd(c(str_c(YEAR, "-01-01"), str_c(YEAR, "-12-31")))
+TIME_STAMP <- lubridate::ymd("2017-12-31")
 ```
 
 > Mapping Collaborations in Research Projects Funded by the SNSF in 2017.
@@ -42,7 +40,7 @@ grants <- rio::import("http://p3.snf.ch/P3Export/P3_GrantExport.csv") %>%
   janitor::clean_names() %>%
   select(project_number, start_date, end_date) %>%
   mutate(start_date = dmy(start_date), end_date = dmy(end_date)) %>%
-  filter(end_date >= TIME_WINDOW[1], start_date <= TIME_WINDOW[2])
+  filter(end_date >= TIME_STAMP, start_date <= TIME_STAMP)
 
 # people <- read_rds("ppl.rds.bz2") %>%
 people <- rio::import("http://p3.snf.ch/P3Export/P3_PersonExport.csv") %>%
@@ -213,24 +211,27 @@ edges_ch <- edges_ch %>%
 p_load("maps", "mapdata", "geosphere")
 
 # color ramp
-make_ramp <- function(alpha1 = .45, alpha2 = .2, 
-                      col1 = "#003399", col2 = "#252525", 
+make_ramp <- function(alpha1 = .5, alpha2 = .2, 
+                      col1 = "#194CB2", col2 = "#194CB2", 
                       n_shades = 100) {
   col1 = adjustcolor(col1, alpha.f = alpha1)
   col2 = adjustcolor(col2, alpha.f = alpha2)
   colorRampPalette(c(col2, col1), alpha = TRUE)(n_shades)
 }
+
 # map nodes
-add_nodes <- function(nodes, ramp, cex_scale = 3) {
+add_nodes <- function(nodes, ramp, cex_scale = 4) {
   with(nodes, {
     # scale node size
     s <- size /  max(size)
     points(x = x, y = y, 
-           pch = 16, cex = cex_scale * sqrt(s), col = ramp[round(100 * s)])
+           pch = 16, cex = cex_scale * sqrt(s),
+           col = ramp[round(100 * s)])
   })
 }
+
 # map edges
-add_edges <- function(edges, ramp, lwd_scale = 4) {
+add_edges <- function(edges, ramp, lwd_scale = 6) {
   with(edges, {
     for (k in 1:nrow(edges))  {
       arc <- gcIntermediate(c(x1[k], y1[k]), c(x2[k], y2[k]), n = 100, addStartEnd = TRUE)
@@ -242,18 +243,34 @@ add_edges <- function(edges, ramp, lwd_scale = 4) {
 
 # svg("map_ch.svg", width = 12, height = 7)
 par(mar = c(0, 0, 0, 0))
-maps::map(database = "worldHires", regions = "Switzerland", fill = FALSE, col = rgb(0, 0, 0, .3))
+maps::map(database = "worldHires", regions = "Switzerland", 
+          lty = 0, fill = TRUE, col = rgb(0, 0, 0, .1))
+
 edge_col <- make_ramp()
-add_nodes(nodes_ch, ramp = edge_col)
+node_col <- gray.colors(100, start = 0.6, end = 0.3, alpha = .7)
+
+add_nodes(nodes_ch, ramp = node_col)
 add_edges(edges_ch, ramp = edge_col)
 
 # label university cities
-uni <- c("Zürich", "Lausanne", "Bern", "Genève","Basel", "Fribourg", "Neuchâtel", "St. Gallen", "Lugano", "Luzern")
+uni <- c("Zürich", "Lausanne", "Bern", "Geneva","Basel", "Fribourg", "Neuchâtel", "St. Gallen", "Lugano", "Lucerne")
 uni_nodes <- filter(nodes_ch, institute_place %in% uni)
 with(uni_nodes, {
-  text(x, y, institute_place, 
-    pos = 3, cex = .7, col = rgb(0, 0, 0, .66))
+  text(x, y + 0.03, institute_place, 
+    pos = 3, cex = .7, col = rgb(0, 0, 0, .85))
 })
+
+legend_points <- tibble(institute_place = c("50", "500"),
+                 x = c(9.75, 9.75),
+                 y = c(46.05, 45.9),
+                 size = c(50, 500))
+
+with(legend_points, {
+  text(x + 0.08, y, str_c(institute_place, " Collabs"), 
+    pos = 4, cex = .7, col = rgb(0, 0, 0, .85))
+})
+
+add_nodes(legend_points, ramp = node_col)
 # invisible(dev.off())
 ```
 
@@ -300,10 +317,11 @@ edges_eu <- edges_eu %>%
 par(mar = c(0, 0, 0, 0))
 # maps::map(database = "worldHires", 
 maps::map(regions = str_c(close_countries, collapse = "|"), 
-          fill = FALSE, col = rgb(0, 0, 0, .2), 
+          lty = 0, fill = TRUE, col = rgb(0, 0, 0, .1), 
           xlim = c(-25, 50), ylim = c(25, 70))
+
 edge_col <- make_ramp(0.5, 0.1)
-add_nodes(nodes_eu, ramp = edge_col, cex_scale = 1.2)
+add_nodes(nodes_eu, ramp = node_col, cex_scale = 1.2)
 add_edges(edges_eu, ramp = edge_col, lwd_scale = 1.2)
 # invisible(dev.off())
 ```
@@ -335,10 +353,11 @@ edges_io <- edges_io %>%
 
 # svg("map_int.svg", width = 12, height = 7)
 par(mar = c(0, 0, 0, 0))
-maps::map("world", fill = FALSE, col = rgb(0, 0, 0, .2))
+maps::map("world", regions = "(?!Antarctica)", 
+          lty = 0, fill = TRUE, col = rgb(0, 0, 0, .1), wrap = TRUE)
 # map nodes
-edge_col <- make_ramp(0.5, 0.2)
-add_nodes(nodes_io, ramp = edge_col, cex_scale = .5)
+edge_col <- make_ramp(0.6, 0.3)
+add_nodes(nodes_io, ramp = node_col, cex_scale = .4)
 add_edges(edges_io, ramp = edge_col, lwd_scale = .25)
 # invisible(dev.off())
 ```
