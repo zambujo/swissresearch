@@ -262,13 +262,13 @@ add_edges <- function(edges, ramp, lwd_scale = 6) {
   })
 }
 
-# svg("map_ch.svg", width = 12, height = 7)
+svg("map_ch.svg", width = 12, height = 7)
 par(mar = c(0, 0, 0, 0))
 maps::map(database = "worldHires", regions = "Switzerland", 
           lty = 0, fill = TRUE, col = rgb(0, 0, 0, .1))
 
 edge_col <- make_ramp()
-node_col <- gray.colors(100, start = 0.6, end = 0.3, alpha = .7)
+node_col <- gray.colors(100, start = 0.5, end = 0.5, alpha = .7)
 
 add_nodes(nodes_ch, ramp = node_col)
 add_edges(edges_ch, ramp = edge_col)
@@ -292,7 +292,7 @@ with(legend_points, {
 })
 
 add_nodes(legend_points, ramp = node_col)
-# invisible(dev.off())
+invisible(dev.off())
 ```
 
 ## Collaborations within Europe
