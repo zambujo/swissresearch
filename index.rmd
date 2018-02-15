@@ -79,11 +79,25 @@ loc_count <- function(dat) {
     summarise(n_loc = n_distinct(institute_place))
 }
 
+# count number of people involved
+col_count <- function(dat) {
+  group_by(dat, project_number) %>%
+    summarise(n_col = n_distinct(person_id_snsf))
+}
+
+
 # network core: grants involving multiple places
 core <- people %>%
   select(-person_id_snsf) %>%
   distinct() %>%
   semi_join(filter(loc_count(people), n_loc > 1), by = "project_number") %>%
+  arrange(project_number)
+
+# for statistical purposes only
+colstats <- people %>%
+  select(-person_id_snsf) %>%
+  distinct() %>%
+  semi_join(filter(col_count(people), n_col > 1), by = "project_number") %>%
   arrange(project_number)
 
 head(core)
@@ -157,6 +171,13 @@ core <- core %>%
     country = str_replace_all(country, "^Russian Federation$", "Russia"),
     country = str_replace_all(country, "^United States of America$", "USA"),
     country = str_replace_all(country, "^The Netherlands$", "Netherlands"))
+
+# colstats <- colstats %>%
+#   left_join(geocodes, by = c("institute_place" = "place")) %>%
+#   mutate(country = map_chr(strsplit(addr, ", "), tail, n = 1)) %>%
+#   group_by(project_number) %>%
+#   summarise(international = ifelse(all(country == "Switzerland", na.rm = TRUE), FALSE, TRUE)) %>%
+#   count(international)
 
 # build graph elements ----------------------------------------------------
 
