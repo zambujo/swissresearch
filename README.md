@@ -4,12 +4,12 @@ Highlighting the outreach of collaborations in SNSF 2017 running grants.
 
 ### In Switzerland
 
-![switzerland](index_files/figure-html/svg_ch-1.png)
+![switzerland](map_ch.svg)
 
 ### In Europe
 
-![europe](index_files/figure-html/core_eu-1.png)
+![europe](map_eu.svg)
 
 ### In the world
 
-![world](index_files/figure-html/international-1.png)
+![world](map_int.svg)
